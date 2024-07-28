@@ -34,6 +34,7 @@ local.properties
 *.keystore
 !debug.keystore
 *.apk
+google-services.json
 service_key.json
 db/
 files/
@@ -42,7 +43,7 @@ files/
 node_modules/
 npm-debug.log
 yarn-error.log
-google-services.json
+
 # fastlane
 #
 # It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the

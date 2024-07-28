@@ -371,7 +371,7 @@ const ChangeUP = () => {
   };
 
   const sendOtp = async () => {
-    const url = `https://dexpense-rust.vercel.app/api/sendVerificationEmail`;
+    const url = `https://expense365.vercel.app/api/sendVerificationEmail`;
     try {
       setShowLoder(true);
       setShowEntry(false);
@@ -389,7 +389,7 @@ const ChangeUP = () => {
     }
   };
   const verifyEmail = async () => {
-    const url = `https://dexpense-rust.vercel.app/api/verifyOtp`;
+    const url = `https://expense365.vercel.app/api/verifyOtp`;
     try {
       setShowEntry(false);
       setShowLoder(true);
