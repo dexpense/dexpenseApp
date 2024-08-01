@@ -224,6 +224,9 @@ const BikeDetails = () => {
                   showToast('success', 'Data Added Successfully');
                   // setTimeout(() => navigation.navigate('Home'), 1500);
                   setStateObject(thisVehicle);
+                  setShowFuelAdd(!showFuelAdd);
+                  setAddBtnClicked(false);
+                  setTransferingAdmin(allAccounts);
                 })
                 .catch(e => {
                   setShowLoader(false);
@@ -546,6 +549,13 @@ const BikeDetails = () => {
         showToast('success', 'Data Added Successfully');
         // setTimeout(() => navigation.navigate('Home'), 1500);
         setStateObject(thisVehicle);
+        setServiceDone(false);
+        setAddBtnClicked(false);
+        setIsEnabled(false);
+        setTransferingAdmin(allAccounts);
+        setServicedAtDistance('');
+        SetServiceCost('');
+        setDate(new Date());
       });
     }
   };

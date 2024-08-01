@@ -182,6 +182,8 @@ const AccountDetails = () => {
           // setTimeout(() => navigation.navigate('Home'), 1500);
           setDate(new Date());
           setStateObject(thisAccount);
+          setShowTransactionAdd(!showTransactionAdd);
+          setShowTransactions(!showTransactions);
         });
       });
     } else {
@@ -400,6 +402,7 @@ const AccountDetails = () => {
               setShowLoader(false);
               showToast('success', 'Data Updated Successfully');
               setStateObject(thisAccount);
+              setVisible(false);
               // setTimeout(() => navigation.navigate('Home'), 1500);
               setEditDate(new Date());
             })
