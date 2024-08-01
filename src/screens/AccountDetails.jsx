@@ -172,7 +172,7 @@ const AccountDetails = () => {
           (a, b) => b.date - a.date,
         );
         setAccountState(accounts);
-        setStateObject(thisAccount);
+
         await EncryptedStorage.setItem(
           'accounts',
           JSON.stringify(accounts),
@@ -181,6 +181,7 @@ const AccountDetails = () => {
           showToast('success', 'Data Added Successfully');
           // setTimeout(() => navigation.navigate('Home'), 1500);
           setDate(new Date());
+          setStateObject(thisAccount);
         });
       });
     } else {
@@ -362,7 +363,7 @@ const AccountDetails = () => {
         (a, b) => b.date - a.date,
       );
       setAccountState(accounts);
-      setStateObject(thisAccount);
+
       await EncryptedStorage.setItem('accounts', JSON.stringify(accounts))
         .then(async () => {
           const allTransactions = allTransactions.filter(
@@ -398,6 +399,7 @@ const AccountDetails = () => {
             .then(() => {
               setShowLoader(false);
               showToast('success', 'Data Updated Successfully');
+              setStateObject(thisAccount);
               // setTimeout(() => navigation.navigate('Home'), 1500);
               setEditDate(new Date());
             })
@@ -456,7 +458,7 @@ const AccountDetails = () => {
       setAccountState(
         [...exceptThisAccount, thisAccount].sort((a, b) => b.date - a.date),
       );
-      setStateObject(thisAccount);
+
       await EncryptedStorage.setItem(
         'accounts',
         JSON.stringify(
@@ -483,6 +485,7 @@ const AccountDetails = () => {
           } else {
             setShowLoader(false);
             showToast('success', 'Data Deleted Successfully');
+            setStateObject(thisAccount);
             // setTimeout(() => navigation.navigate('Home'), 1500);
           }
         })

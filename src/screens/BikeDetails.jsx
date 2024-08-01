@@ -168,7 +168,7 @@ const BikeDetails = () => {
             (a, b) => b.date - a.date,
           );
           setVehicleState(x);
-          setStateObject(thisVehicle);
+
           await EncryptedStorage.setItem('vehicles', JSON.stringify(x)).then(
             async () => {
               if (transferingAdmin.id !== 'deviceDefaultAccount') {
@@ -223,6 +223,7 @@ const BikeDetails = () => {
                   setShowLoader(false);
                   showToast('success', 'Data Added Successfully');
                   // setTimeout(() => navigation.navigate('Home'), 1500);
+                  setStateObject(thisVehicle);
                 })
                 .catch(e => {
                   setShowLoader(false);
@@ -352,7 +353,7 @@ const BikeDetails = () => {
       (a, b) => b.date - a.date,
     );
     setVehicleState(allVehicles);
-    setStateObject(thisVehicle);
+
     await EncryptedStorage.setItem('vehicles', JSON.stringify(allVehicles))
       .then(async () => {
         const fueling = JSON.parse(await EncryptedStorage.getItem('fueling'));
@@ -419,6 +420,7 @@ const BikeDetails = () => {
                       setShowLoader(false);
                       showToast('success', 'Data Deleted Successfully');
                       // setTimeout(() => navigation.navigate('Home'), 1500);
+                      setStateObject(thisVehicle);
                     })
                     .catch(e => {
                       setShowLoader(false);
@@ -435,6 +437,7 @@ const BikeDetails = () => {
               setShowLoader(false);
               showToast('success', 'Data Deleted Successfully');
               // setTimeout(() => navigation.navigate('Home'), 1500);
+              setStateObject(thisVehicle);
             }
           })
           .catch(e => {
@@ -516,7 +519,7 @@ const BikeDetails = () => {
       thisVehicle.nextOilChangeDistance =
         parseInt(servicedAtDistance) + parseInt(oilRun);
       setVehicleState([...exceptThisVehicle, thisVehicle]);
-      setStateObject(thisVehicle);
+
       await EncryptedStorage.setItem(
         'vehicles',
         JSON.stringify([...exceptThisVehicle, thisVehicle]),
@@ -524,6 +527,7 @@ const BikeDetails = () => {
       setShowLoader(false);
       showToast('success', 'Data Added Successfully');
       // setTimeout(() => navigation.navigate('Home'), 1500);
+      setStateObject(thisVehicle);
     } else {
       const exceptThisVehicle = vehicleState.filter(
         item => item.id !== data.id,
@@ -533,7 +537,7 @@ const BikeDetails = () => {
       thisVehicle.serviceCost = parseFloat(serviceCost);
       thisVehicle.serviceDate = Date.parse(date);
       setVehicleState([...exceptThisVehicle, thisVehicle]);
-      setStateObject(thisVehicle);
+
       await EncryptedStorage.setItem(
         'vehicles',
         JSON.stringify([...exceptThisVehicle, thisVehicle]),
@@ -541,6 +545,7 @@ const BikeDetails = () => {
         setShowLoader(false);
         showToast('success', 'Data Added Successfully');
         // setTimeout(() => navigation.navigate('Home'), 1500);
+        setStateObject(thisVehicle);
       });
     }
   };
