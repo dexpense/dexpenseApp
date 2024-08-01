@@ -45,7 +45,17 @@ import {useGlobalContext} from '../context/Store';
 const CashBook = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const {state, setActiveTab, setStateObject} = useGlobalContext();
+  const {
+    state,
+    setActiveTab,
+    accountState,
+    setAccountState,
+    transactionState,
+    setTransactionState,
+    fuelingState,
+    setFuelingState,
+    setStateObject,
+  } = useGlobalContext();
   const user = state.USER;
   const [visible, setVisible] = useState(false);
   const [accounts, setAccounts] = useState([]);
@@ -122,21 +132,25 @@ const CashBook = () => {
   const addAccount = async () => {
     if (accountName !== '' && accountType !== '' && amount !== '') {
       setShowLoader(true);
+      const x = [
+        ...accountState,
+        {
+          date: Date.now(),
+          id: docId,
+          accountName: accountName,
+          accountType: accountType,
+          addedBy: user.id,
+          email: user.email,
+          amount: parseFloat(amount),
+          recentTransaction: parseFloat(amount),
+          upLoadedAt: '',
+          downLoadedAt: '',
+          modifiedAt: '',
+        },
+      ].sort((a, b) => b.date - a.date);
+      setAccountState(x);
 
-      accounts.push({
-        date: Date.now(),
-        id: docId,
-        accountName: accountName,
-        accountType: accountType,
-        addedBy: user.id,
-        email: user.email,
-        amount: parseFloat(amount),
-        recentTransaction: parseFloat(amount),
-        upLoadedAt: '',
-        downLoadedAt: '',
-        modifiedAt: '',
-      });
-      await EncryptedStorage.setItem('accounts', JSON.stringify(accounts))
+      await EncryptedStorage.setItem('accounts', JSON.stringify(x))
         .then(() => {
           setShowLoader(false);
           showToast('success', 'Account Added Successfully');
@@ -168,11 +182,29 @@ const CashBook = () => {
       setAllAccounts(newData);
       setShowLoader(false);
       setAccounts(newData);
+      setAccountState(newData);
       // await EncryptedStorage.removeItem('accounts');
     } else {
       setShowLoader(false);
       showToast('success', 'No Account Added!');
     }
+  };
+  const getTransactions = async () => {
+    setShowLoader(true);
+    const transactions = JSON.parse(
+      await EncryptedStorage.getItem('transactions'),
+    );
+    const newData = transactions.sort((a, b) => b.date - a.date);
+    setShowLoader(false);
+    setTransactionState(newData);
+  };
+
+  const getFueling = async () => {
+    setShowLoader(true);
+    const fueling = JSON.parse(await EncryptedStorage.getItem('fueling'));
+    const newData = fueling.sort((a, b) => b.date - a.date);
+    setShowLoader(false);
+    setFuelingState(newData);
   };
 
   const showConfirmDialog = id => {
@@ -202,18 +234,46 @@ const CashBook = () => {
         JSON.stringify(filteredAccount),
       );
 
-      let transactions = JSON.parse(
-        await EncryptedStorage.getItem('transactions'),
-      );
-      if (transactions.length > 0) {
-        let filteredTransactions = transactions.filter(
+      if (transactionState.length > 0) {
+        const filteredTransactions = transactionState.filter(
           el => el.accountID !== id,
         );
+        const filteredFuelings = fuelingState.filter(el => el.accountID !== id);
         if (filteredTransactions.length > 0) {
+          setTransactionState(
+            transactionState.filter(item => item.accountID !== id),
+          );
           try {
             await EncryptedStorage.setItem(
               'transactions',
               JSON.stringify(filteredTransactions),
+            )
+              .then(() => {
+                setShowLoader(false);
+                showToast('success', 'Account Deleted Successfully');
+                getAccounts();
+              })
+              .catch(e => {
+                setShowLoader(false);
+                showToast('error', 'Account Deletation Failed');
+                console.log(e);
+              });
+          } catch (e) {
+            setShowLoader(false);
+            showToast('error', 'Account Deletation Failed');
+            console.log(e);
+          }
+        } else {
+          setShowLoader(false);
+          showToast('success', 'Account Deleted Successfully');
+          getAccounts();
+        }
+        if (filteredFuelings.length > 0) {
+          setFuelingState(fuelingState.filter(item => item.accountID !== id));
+          try {
+            await EncryptedStorage.setItem(
+              'fueling',
+              JSON.stringify(filteredFuelings),
             )
               .then(() => {
                 setShowLoader(false);
@@ -253,25 +313,22 @@ const CashBook = () => {
       editID !== ''
     ) {
       setShowLoader(true);
-      let filteredAccount = accounts.filter(el => el.id !== editID);
-      let targetAccount = accounts.filter(el => el.id === editID)[0];
-      filteredAccount.push({
-        accountName: editAccountName,
-        accountType: editAccountType,
-        addedBy: user.id,
-        email: user.email,
-        amount: parseFloat(editAmount),
-        date: Date.now(),
-        recentTransaction: targetAccount.recentTransaction,
-        id: targetAccount.id,
-        upLoadedAt: targetAccount.upLoadedAt,
-        downLoadedAt: targetAccount.downLoadedAt,
-        modifiedAt: Date.now(),
-      });
-      await EncryptedStorage.setItem(
-        'accounts',
-        JSON.stringify(filteredAccount),
+      const exceptThisAccount = accountState.filter(
+        item => item.id === transferingAdmin.id,
       );
+      const thisAccount = accountState.filter(
+        item => item.id === transferingAdmin.id,
+      )[0];
+      thisAccount.accountName = editAccountName;
+      thisAccount.accountType = editAccountType;
+      thisAccount.amount = parseFloat(editAmount);
+      thisAccount.date = Date.now();
+      const x = [...exceptThisAccount, thisAccount].sort(
+        (a, b) => b.date - a.date,
+      );
+      setAccountState(x);
+
+      await EncryptedStorage.setItem('accounts', JSON.stringify(x));
       setShowLoader(false);
       setVisible(false);
       setEditAccountType('Bank');
@@ -299,7 +356,7 @@ const CashBook = () => {
       transferingPurpose !== '' &&
       transferingAdmin.amount > parseFloat(transferingAmount)
     ) {
-      let usersID = user.id;
+      const usersID = user.id;
       if (accounts) {
         setShowLoader(true);
         let otherThanTransferingAccount = accounts.filter(
@@ -315,50 +372,51 @@ const CashBook = () => {
           el => el.id === receivingAdmin.id,
         )[0];
 
-        setShowLoader(false);
-        otherThanTransferingAndReceivingAccount.push(
-          {
-            id: transferingAccount.id,
-            accountName: transferingAccount.accountName,
-            accountType: transferingAccount.accountType,
-            addedBy: user.id,
-            email: user.email,
-            amount: round2dec(
-              parseFloat(transferingAdmin.amount) -
-                parseFloat(transferingAmount),
-            ),
-            date: Date.parse(date),
-            recentTransaction: parseFloat(transferingAmount),
-            upLoadedAt: transferingAccount.upLoadedAt,
-            downLoadedAt: transferingAccount.downLoadedAt,
-            modifiedAt: Date.now(),
-          },
-          {
-            id: receivingAccount.id,
-            accountName: receivingAccount.accountName,
-            accountType: receivingAccount.accountType,
-            addedBy: user.id,
-            email: user.email,
-            amount: round2dec(
-              parseFloat(receivingAdmin.amount) + parseFloat(transferingAmount),
-            ),
-            date: Date.parse(date),
-            recentTransaction: parseFloat(transferingAmount),
-            upLoadedAt: receivingAccount.upLoadedAt,
-            downLoadedAt: receivingAccount.downLoadedAt,
-            modifiedAt: Date.now(),
-          },
-        );
+        otherThanTransferingAndReceivingAccount
+          .push(
+            {
+              id: transferingAccount.id,
+              accountName: transferingAccount.accountName,
+              accountType: transferingAccount.accountType,
+              addedBy: user.id,
+              email: user.email,
+              amount: round2dec(
+                parseFloat(transferingAdmin.amount) -
+                  parseFloat(transferingAmount),
+              ),
+              date: Date.parse(date),
+              recentTransaction: parseFloat(transferingAmount),
+              upLoadedAt: transferingAccount.upLoadedAt,
+              downLoadedAt: transferingAccount.downLoadedAt,
+              modifiedAt: Date.now(),
+            },
+            {
+              id: receivingAccount.id,
+              accountName: receivingAccount.accountName,
+              accountType: receivingAccount.accountType,
+              addedBy: user.id,
+              email: user.email,
+              amount: round2dec(
+                parseFloat(receivingAdmin.amount) +
+                  parseFloat(transferingAmount),
+              ),
+              date: Date.parse(date),
+              recentTransaction: parseFloat(transferingAmount),
+              upLoadedAt: receivingAccount.upLoadedAt,
+              downLoadedAt: receivingAccount.downLoadedAt,
+              modifiedAt: Date.now(),
+            },
+          )
+          .sort((a, b) => b.date - a.date);
+        setAccountState(otherThanTransferingAndReceivingAccount);
         await EncryptedStorage.setItem(
           'accounts',
           JSON.stringify(otherThanTransferingAndReceivingAccount),
         )
           .then(async () => {
-            let transactions = JSON.parse(
-              await EncryptedStorage.getItem('transactions'),
-            );
-            if (transactions) {
-              transactions.push(
+            const transactions = transactionState;
+            transactions
+              .push(
                 {
                   date: Date.parse(date),
                   id: docId,
@@ -393,93 +451,34 @@ const CashBook = () => {
                   downLoadedAt: '',
                   modifiedAt: '',
                 },
-              );
-              await EncryptedStorage.setItem(
-                'transactions',
-                JSON.stringify(transactions),
               )
-                .then(() => {
-                  setShowLoader(false);
-                  showToast('success', 'Amount Transfer Successfull!');
-                  getAccounts();
-                  setShowTransferView(false);
-                  setShowTransferBtn(true);
-                  setShowAddAccount(false);
-                  setShowAccounts(true);
-                  setIsTransferClicked(false);
-                  setShowTranferSelector(false);
-                  setTransferingAdmin(allAccounts);
-                  setShowTransferData(false);
-                  setTransferingAmount('');
-                  setTransferingPurpose('');
-                  setDate(new Date());
-                })
-                .catch(e => {
-                  setShowLoader(false);
-                  showToast('error', 'Something Went Wrong');
-                  console.log(e);
-                });
-            } else {
-              await EncryptedStorage.setItem(
-                'transactions',
-                JSON.stringify([
-                  {
-                    date: Date.parse(date),
-                    id: docId,
-                    accountName: transferingAdmin.accountName,
-                    accountID: transferingAdmin.id,
-                    addedBy: usersID,
-                    amount: parseFloat(transferingAmount),
-                    purpose: transferingPurpose,
-                    transactionType: 'Debit',
-                    previousAmount: parseFloat(transferingAdmin.amount),
-                    currentAmount:
-                      parseFloat(transferingAdmin.amount) -
-                      parseFloat(transferingAmount),
-                    upLoadedAt: '',
-                    downLoadedAt: '',
-                    modifiedAt: '',
-                  },
-                  {
-                    date: Date.parse(date),
-                    id: docId + '-' + 'transfer',
-                    accountName: receivingAdmin.accountName,
-                    accountID: receivingAdmin.id,
-                    addedBy: usersID,
-                    amount: parseFloat(transferingAmount),
-                    purpose: transferingPurpose,
-                    transactionType: 'Credit',
-                    previousAmount: parseFloat(receivingAdmin.amount),
-                    currentAmount:
-                      parseFloat(receivingAdmin.amount) +
-                      parseFloat(transferingAmount),
-                    upLoadedAt: '',
-                    downLoadedAt: '',
-                    modifiedAt: '',
-                  },
-                ]),
-              )
-                .then(() => {
-                  setShowLoader(false);
-                  showToast('success', 'Amount Transfer Successfull!');
-                  getAccounts();
-                  setShowTransferView(false);
-                  setShowTransferBtn(true);
-                  setShowAddAccount(false);
-                  setShowAccounts(true);
-                  setIsTransferClicked(false);
-                  setShowTranferSelector(false);
-                  setTransferingAdmin(allAccounts);
-                  setShowTransferData(false);
-                  setTransferingAmount('');
-                  setTransferingPurpose('');
-                })
-                .catch(e => {
-                  setShowLoader(false);
-                  showToast('error', 'Something Went Wrong');
-                  console.log(e);
-                });
-            }
+              .sort((a, b) => b.date - a.date);
+            setTransactionState(transactions);
+            await EncryptedStorage.setItem(
+              'transactions',
+              JSON.stringify(transactions),
+            )
+              .then(() => {
+                setShowLoader(false);
+                showToast('success', 'Amount Transfer Successfull!');
+                getAccounts();
+                setShowTransferView(false);
+                setShowTransferBtn(true);
+                setShowAddAccount(false);
+                setShowAccounts(true);
+                setIsTransferClicked(false);
+                setShowTranferSelector(false);
+                setTransferingAdmin(allAccounts);
+                setShowTransferData(false);
+                setTransferingAmount('');
+                setTransferingPurpose('');
+                setDate(new Date());
+              })
+              .catch(e => {
+                setShowLoader(false);
+                showToast('error', 'Something Went Wrong');
+                console.log(e);
+              });
           })
           .catch(e => {
             setShowLoader(false);
@@ -516,9 +515,25 @@ const CashBook = () => {
     return () => backHandler.remove();
   }, []);
   useEffect(() => {
-    getAccounts();
+    if (accountState.length === 0) {
+      getAccounts();
+    } else {
+      setAllAccounts(accountState.sort((a, b) => b.date - a.date));
+    }
+    if (transactionState.length === 0) {
+      getTransactions();
+    }
+    if (fuelingState.length === 0) {
+      getFueling();
+    }
   }, [isFocused]);
-  useEffect(() => {}, [isEnabled]);
+  useEffect(() => {}, [
+    isEnabled,
+    filteredAccounts,
+    transferingAmount,
+    transferingPurpose,
+    transferingAdmin,
+  ]);
   return (
     <View style={{flex: 1}}>
       <ScrollView

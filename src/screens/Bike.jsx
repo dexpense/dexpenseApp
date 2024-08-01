@@ -37,7 +37,15 @@ import {useGlobalContext} from '../context/Store';
 const Bike = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const {state, setActiveTab, setStateObject} = useGlobalContext();
+  const {
+    state,
+    setActiveTab,
+    vehicleState,
+    setVehicleState,
+    fuelingState,
+    setFuelingState,
+    setStateObject,
+  } = useGlobalContext();
   const user = state.USER;
   const [disable, setDisable] = useState(true);
   const [visible, setVisible] = useState(false);
@@ -96,6 +104,7 @@ const Bike = () => {
   const loadMore = () => {
     setVisibleItems(prevVisibleItems => prevVisibleItems + 5);
   };
+
   const getVehicle = async () => {
     setShowLoader(true);
     const existedVehicle = JSON.parse(
@@ -106,16 +115,27 @@ const Bike = () => {
       setShowLoader(false);
       setAllBike(newData);
       setVehicle(newData);
+      setVehicleState(newData);
     } else {
       setShowLoader(false);
       showToast('error', 'No Vehicle is Added');
     }
   };
+  const getFueling = async () => {
+    setShowLoader(true);
+    const currentFueling = JSON.parse(
+      await EncryptedStorage.getItem('fueling'),
+    );
+
+    let newData = currentFueling.sort((a, b) => b.date - a.date);
+    setShowLoader(false);
+    setFuelingState(newData);
+  };
   const AddBike = async () => {
     if (bikeName !== '' && run !== '' && petrolAdded !== '' && milage !== '') {
       setShowLoader(true);
       let x = [
-        ...vehicle,
+        ...vehicleState,
         {
           id: docId,
           date: Date.now(),
@@ -162,6 +182,7 @@ const Bike = () => {
           modifiedAt: '',
         },
       ].sort((a, b) => b.date - a.date);
+      setVehicleState(x);
       setVehicle(x);
       setAllBike(x);
       await EncryptedStorage.setItem('vehicles', JSON.stringify(x))
@@ -220,9 +241,10 @@ const Bike = () => {
     setShowLoader(true);
 
     try {
-      let filteredVehicle = vehicle
+      let filteredVehicle = vehicleState
         .filter(el => el.id !== id)
         .sort((a, b) => b.date - a.date);
+      setVehicleState(filteredVehicle);
       setVehicle(filteredVehicle);
       setAllBike(filteredVehicle);
       await EncryptedStorage.setItem(
@@ -230,32 +252,26 @@ const Bike = () => {
         JSON.stringify(filteredVehicle),
       );
 
-      let fueling = JSON.parse(await EncryptedStorage.getItem('fueling'));
-      if (fueling.length > 0) {
-        let filteredFueling = fueling.filter(el => el.bikeID !== id);
-        if (filteredFueling.length > 0) {
-          try {
-            await EncryptedStorage.setItem(
-              'fueling',
-              JSON.stringify(filteredFueling),
-            )
-              .then(() => {
-                setShowLoader(false);
-                showToast('success', 'Vehicle Deleted Successfully');
-              })
-              .catch(e => {
-                setShowLoader(false);
-                showToast('error', 'Vehicle Deletation Failed');
-                console.log(e);
-              });
-          } catch (e) {
-            setShowLoader(false);
-            showToast('error', 'Vehicle Deletation Failed');
-            console.log(e);
-          }
-        } else {
+      let filteredFueling = fuelingState.filter(el => el.bikeID !== id);
+      if (filteredFueling.length > 0) {
+        try {
+          await EncryptedStorage.setItem(
+            'fueling',
+            JSON.stringify(filteredFueling),
+          )
+            .then(() => {
+              setShowLoader(false);
+              showToast('success', 'Vehicle Deleted Successfully');
+            })
+            .catch(e => {
+              setShowLoader(false);
+              showToast('error', 'Vehicle Deletation Failed');
+              console.log(e);
+            });
+        } catch (e) {
           setShowLoader(false);
-          showToast('success', 'Vehicle Deleted Successfully');
+          showToast('error', 'Vehicle Deletation Failed');
+          console.log(e);
         }
       } else {
         setShowLoader(false);
@@ -275,7 +291,7 @@ const Bike = () => {
     ) {
       setShowLoader(true);
 
-      let filteredVehicle = vehicle.filter(el => el.id !== editID);
+      let filteredVehicle = vehicleState.filter(el => el.id !== editID);
       filteredVehicle = [
         ...filteredVehicle,
         {
@@ -307,6 +323,7 @@ const Bike = () => {
       ].sort((a, b) => b.date - a.date);
       setAllBike(filteredVehicle);
       setVehicle(filteredVehicle);
+      setVehicleState(filteredVehicle);
 
       await EncryptedStorage.setItem(
         'vehicles',
@@ -332,9 +349,16 @@ const Bike = () => {
     return () => backHandler.remove();
   }, []);
   useEffect(() => {
-    getVehicle();
+    if (vehicleState.length === 0) {
+      getVehicle();
+    } else {
+      setAllBike(vehicleState);
+    }
+    if (fuelingState.length === 0) {
+      getFueling();
+    }
   }, [isFocused]);
-  useEffect(() => {}, [isFocused]);
+
   useEffect(() => {}, [vehicle, allBike]);
 
   return (

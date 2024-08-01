@@ -16,6 +16,16 @@ const GlobalContext = createContext({
   setStateArray: () => [],
   stateObject: {},
   setStateObject: () => {},
+  vehicleState: [],
+  setVehicleState: () => [],
+  fuelingState: [],
+  setFuelingState: () => [],
+  accountState: [],
+  setAccountState: () => [],
+  transactionState: [],
+  setTransactionState: () => [],
+  noteState: [],
+  setNoteState: () => [],
 });
 
 export const GlobalContextProvider = ({children}) => {
@@ -30,6 +40,11 @@ export const GlobalContextProvider = ({children}) => {
   const [activeTab, setActiveTab] = useState(0);
   const [stateArray, setStateArray] = useState([]);
   const [stateObject, setStateObject] = useState({});
+  const [vehicleState, setVehicleState] = useState([]);
+  const [fuelingState, setFuelingState] = useState([]);
+  const [accountState, setAccountState] = useState([]);
+  const [transactionState, setTransactionState] = useState([]);
+  const [noteState, setNoteState] = useState([]);
 
   return (
     <GlobalContext.Provider
@@ -42,6 +57,16 @@ export const GlobalContextProvider = ({children}) => {
         setStateArray,
         stateObject,
         setStateObject,
+        vehicleState,
+        setVehicleState,
+        fuelingState,
+        setFuelingState,
+        accountState,
+        setAccountState,
+        transactionState,
+        setTransactionState,
+        noteState,
+        setNoteState,
       }}>
       {children}
     </GlobalContext.Provider>

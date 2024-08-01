@@ -40,7 +40,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {Image as Img} from 'react-native-compressor';
 import {useGlobalContext} from '../context/Store';
 const NoteBook = () => {
-  const {state, setActiveTab, setStateObject} = useGlobalContext();
+  const {state, setActiveTab, noteState, setNoteState, setStateObject} =
+    useGlobalContext();
   const user = state.USER;
   const navigation = useNavigation();
   const isFocused = useIsFocused();
@@ -110,6 +111,7 @@ const NoteBook = () => {
           ].sort((a, b) => b.date - a.date);
           setNotes(x);
           setAllNotes(x);
+          setNoteState(x);
 
           await EncryptedStorage.setItem('notes', JSON.stringify(x))
             .then(() => {
@@ -146,6 +148,7 @@ const NoteBook = () => {
         ].sort((a, b) => b.date - a.date);
         setNotes(x);
         setAllNotes(x);
+        setNoteState(x);
         await EncryptedStorage.setItem('notes', JSON.stringify(x))
           .then(() => {
             setShowLoader(false);
@@ -168,10 +171,11 @@ const NoteBook = () => {
     setShowLoader(true);
     const existedNotes = JSON.parse(await EncryptedStorage.getItem('notes'));
     if (existedNotes.length > 0) {
-      let newData = existedNotes.sort((a, b) => b.date - a.date);
+      const newData = existedNotes.sort((a, b) => b.date - a.date);
       setShowLoader(false);
       setAllNotes(newData);
       setNotes(newData);
+      setNoteState(newData);
     } else {
       setShowLoader(false);
       showToast('success', 'No Notes Added!');
@@ -201,6 +205,7 @@ const NoteBook = () => {
       .sort((a, b) => b.date - a.date);
     setNotes(filteredNotes);
     setAllNotes(filteredNotes);
+    setNoteState(filteredNotes);
     await EncryptedStorage.setItem('notes', JSON.stringify(filteredNotes))
       .then(async () => {
         try {
@@ -245,6 +250,7 @@ const NoteBook = () => {
       );
       setNotes(all);
       setAllNotes(all);
+      setNoteState(all);
       await EncryptedStorage.setItem('notes', JSON.stringify(all))
         .then(() => {
           setShowLoader(false);
@@ -281,7 +287,11 @@ const NoteBook = () => {
     return () => backHandler.remove();
   }, []);
   useEffect(() => {
-    getNotes();
+    if (noteState.length === 0) {
+      getNotes();
+    } else {
+      setAllNotes(noteState);
+    }
   }, [isFocused]);
   useEffect(() => {}, [notes]);
 

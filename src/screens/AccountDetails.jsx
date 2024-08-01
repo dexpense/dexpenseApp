@@ -31,7 +31,6 @@ import {
 import Feather from 'react-native-vector-icons/Feather';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import DateTimePickerAndroid from '@react-native-community/datetimepicker';
 const {width, height} = Dimensions.get('window');
@@ -43,7 +42,16 @@ import {
 import {useGlobalContext} from '../context/Store';
 import BottomBar from './BottomBar';
 const AccountDetails = () => {
-  const {state, stateObject} = useGlobalContext();
+  const {
+    stateObject,
+    setStateObject,
+    fuelingState,
+    setFuelingState,
+    transactionState,
+    setTransactionState,
+    accountState,
+    setAccountState,
+  } = useGlobalContext();
 
   const isFocused = useIsFocused();
   const navigation = useNavigation();
@@ -121,11 +129,9 @@ const AccountDetails = () => {
   const submitData = async () => {
     if (amount > 0 && purpose !== '') {
       setShowLoader(true);
-      let transactions = JSON.parse(
-        await EncryptedStorage.getItem('transactions'),
-      );
-      if (transactions) {
-        transactions.push({
+      const transactions = [
+        ...transactionState,
+        {
           date: Date.parse(date),
           id: docId,
           accountName: data.accountName,
@@ -143,179 +149,74 @@ const AccountDetails = () => {
           upLoadedAt: '',
           downLoadedAt: '',
           modifiedAt: '',
-        });
+        },
+      ];
+      setTransactionState(transactions);
+      getTransactions();
+
+      await EncryptedStorage.setItem(
+        'transactions',
+        JSON.stringify(transactions),
+      ).then(async () => {
+        const exceptThisAccount = accountState.filter(
+          item => item.id !== data.id,
+        );
+        const thisAccount = accountState.filter(item => item.id === data.id)[0];
+        thisAccount.date = Date.parse(date);
+        thisAccount.amount =
+          transactionType === 'Debit'
+            ? round2dec(fetchedAmount - parseFloat(amount))
+            : round2dec(fetchedAmount + parseFloat(amount));
+        thisAccount.recentTransaction = round2dec(parseFloat(amount));
+        const accounts = [...exceptThisAccount, thisAccount].sort(
+          (a, b) => b.date - a.date,
+        );
+        setAccountState(accounts);
+        setStateObject(thisAccount);
         await EncryptedStorage.setItem(
-          'transactions',
-          JSON.stringify(transactions),
-        ).then(async () => {
-          let accounts = JSON.parse(await EncryptedStorage.getItem('accounts'));
-          let targetAccount = accounts.filter(el => el.id === data.id)[0];
-          let filteredAccounts = accounts.filter(el => el.id !== data.id);
-          filteredAccounts.push({
-            date: Date.parse(date),
-            amount:
-              transactionType === 'Debit'
-                ? round2dec(fetchedAmount - parseFloat(amount))
-                : round2dec(fetchedAmount + parseFloat(amount)),
-            recentTransaction: round2dec(parseFloat(amount)),
-            id: targetAccount.id,
-            accountName: targetAccount.accountName,
-            accountType: targetAccount.accountType,
-            addedBy: data.addedBy,
-            email: data.email,
-            upLoadedAt: '',
-            downLoadedAt: '',
-            modifiedAt: '',
-          });
-          await EncryptedStorage.setItem(
-            'accounts',
-            JSON.stringify(filteredAccounts),
-          ).then(() => {
-            setShowLoader(false);
-            showToast('success', 'Data Added Successfully');
-            setTimeout(() => navigation.navigate('Home'), 1500);
-            setDate(new Date());
-          });
+          'accounts',
+          JSON.stringify(accounts),
+        ).then(() => {
+          setShowLoader(false);
+          showToast('success', 'Data Added Successfully');
+          // setTimeout(() => navigation.navigate('Home'), 1500);
+          setDate(new Date());
         });
-      } else {
-        await EncryptedStorage.setItem(
-          'transactions',
-          JSON.stringify([
-            {
-              date: Date.parse(date),
-              id: docId,
-              accountName: data.accountName,
-              accountID: data.id,
-              addedBy: data.addedBy,
-              email: data.email,
-              amount: round2dec(parseFloat(amount)),
-              purpose: purpose,
-              transactionType: transactionType,
-              previousAmount: fetchedAmount,
-              currentAmount:
-                transactionType === 'Debit'
-                  ? round2dec(fetchedAmount - parseFloat(amount))
-                  : round2dec(fetchedAmount + parseFloat(amount)),
-              upLoadedAt: '',
-              downLoadedAt: '',
-              modifiedAt: '',
-            },
-          ]),
-        ).then(async () => {
-          let accounts = JSON.parse(await EncryptedStorage.getItem('accounts'));
-          let targetAccount = accounts.filter(el => el.id === data.id)[0];
-          let filteredAccounts = accounts.filter(el => el.id !== data.id);
-          filteredAccounts.push({
-            date: Date.parse(date),
-            amount:
-              transactionType === 'Debit'
-                ? round2dec(fetchedAmount - parseFloat(amount))
-                : round2dec(fetchedAmount + parseFloat(amount)),
-            recentTransaction: round2dec(parseFloat(amount)),
-            id: targetAccount.id,
-            accountName: targetAccount.accountName,
-            accountType: targetAccount.accountType,
-            addedBy: data.addedBy,
-            email: data.email,
-            upLoadedAt: '',
-            downLoadedAt: '',
-            modifiedAt: '',
-          });
-          await EncryptedStorage.setItem(
-            'accounts',
-            JSON.stringify(filteredAccounts),
-          ).then(() => {
-            setShowLoader(false);
-            showToast('success', 'Data Added Successfully');
-            setTimeout(() => navigation.navigate('Home'), 1500);
-            setDate(new Date());
-          });
-        });
-      }
+      });
     } else {
       showToast('error', 'Invalid Data');
     }
   };
   const getTransactions = async () => {
     setShowLoader(true);
-    let transactions = JSON.parse(
-      await EncryptedStorage.getItem('transactions'),
+    const thisAccountDetails = transactionState.filter(
+      el => el.accountID === stateObject.id,
     );
-    if (transactions) {
-      let filteredTransactions = transactions.filter(
-        el => el.accountID === data.id,
-      );
-      let newData = filteredTransactions.sort((a, b) => b.date - a.date);
-      let cost = 0;
-      newData.map(el => {
-        if (el.transactionType === 'Debit') {
-          cost = cost + el.amount;
-        } else {
-          cost = cost - el.amount;
-        }
-        if (cost < 0) {
-          cost = parseFloat(round2dec(cost * -1)) * -1;
-        } else {
-          cost = parseFloat(round2dec(cost));
-        }
-        return round2dec(cost);
-      });
-
-      setTotalExpense(cost);
-      setShowLoader(false);
-      setAllTransactions(newData);
-      setRecentTransaction(parseFloat(data.recentTransaction));
-    } else {
-      setShowLoader(false);
-      showToast('success', 'No Transaction is Added!');
-    }
+    let newData = thisAccountDetails.sort((a, b) => b.date - a.date);
+    let cost = 0;
+    newData.map(el => {
+      if (el.transactionType === 'Debit') {
+        cost = cost - el.amount;
+      } else {
+        cost = cost + el.amount;
+      }
+      if (cost < 0) {
+        cost = parseFloat(round2dec(cost * -1)) * -1;
+      } else {
+        cost = parseFloat(round2dec(cost));
+      }
+      return round2dec(cost);
+    });
+    setTotalExpense(cost);
+    setShowLoader(false);
+    setAllTransactions(newData);
+    setRecentTransaction(parseFloat(data.recentTransaction));
   };
 
   const updateData = async () => {
     let amount = fetchedAmount;
-    let accounts = JSON.parse(await EncryptedStorage.getItem('accounts'));
-    let allAccounts = accounts.filter(el => el.id !== data.id);
-    let targetAccount = accounts.filter(el => el.id === data.id)[0];
-    let accountObj = {
-      amount: amount,
-      date: Date.parse(editDate),
-      recentTransaction: targetAccount.recentTransaction,
-      id: targetAccount.id,
-      accountName: targetAccount.accountName,
-      accountType: targetAccount.accountType,
-      addedBy: data.addedBy,
-      email: data.email,
-      upLoadedAt: targetAccount.upLoadedAt,
-      downLoadedAt: targetAccount.downLoadedAt,
-      modifiedAt: targetAccount.modifiedAt,
-    };
-
-    let transactions = JSON.parse(
-      await EncryptedStorage.getItem('transactions'),
-    );
-
-    let allTransactions = transactions.filter(el => el.id !== editID);
-    let targetTransaction = transactions.filter(el => el.id === editID)[0];
-    let transactionObj = {
-      previousAmount: originalData.previousAmount,
-      purpose: editPurpose,
-      currentAmount: amount,
-      amount: parseFloat(editAmount),
-      transactionType: editTransactionType,
-      date: Date.parse(editDate),
-      id: targetTransaction.id,
-      accountName: targetTransaction.accountName,
-      accountID: targetTransaction.accountID,
-      addedBy: data.addedBy,
-      email: data.email,
-      upLoadedAt: targetTransaction.upLoadedAt,
-      downLoadedAt: targetTransaction.downLoadedAt,
-      modifiedAt: targetTransaction.modifiedAt,
-    };
-
     if (!compareObjects(originalData, editedData)) {
       setShowLoader(true);
-
       if (
         originalData.transactionType !== editedData.transactionType &&
         originalData.amount !== editedData.amount
@@ -336,35 +237,6 @@ const AccountDetails = () => {
             amount = round2dec(fetchedAmount - parseFloat(editAmount) * 2);
           }
         }
-        accountObj = {
-          amount: amount,
-          date: Date.parse(editDate),
-          recentTransaction: targetAccount.recentTransaction,
-          id: targetAccount.id,
-          accountName: targetAccount.accountName,
-          accountType: targetAccount.accountType,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetAccount.upLoadedAt,
-          downLoadedAt: targetAccount.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
-        transactionObj = {
-          previousAmount: originalData.previousAmount,
-          purpose: editPurpose,
-          currentAmount: amount,
-          amount: parseFloat(editAmount),
-          transactionType: editTransactionType,
-          date: Date.parse(editDate),
-          id: targetTransaction.id,
-          accountName: targetTransaction.accountName,
-          accountID: targetTransaction.accountID,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetTransaction.upLoadedAt,
-          downLoadedAt: targetTransaction.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
       } else if (
         originalData.transactionType !== editedData.transactionType &&
         originalData.amount === editedData.amount
@@ -385,35 +257,6 @@ const AccountDetails = () => {
             amount = round2dec(fetchedAmount - parseFloat(editAmount) * 2);
           }
         }
-        accountObj = {
-          amount: amount,
-          date: Date.parse(editDate),
-          recentTransaction: targetAccount.recentTransaction,
-          id: targetAccount.id,
-          accountName: targetAccount.accountName,
-          accountType: targetAccount.accountType,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetAccount.upLoadedAt,
-          downLoadedAt: targetAccount.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
-        transactionObj = {
-          previousAmount: originalData.previousAmount,
-          purpose: editPurpose,
-          currentAmount: amount,
-          amount: parseFloat(editAmount),
-          transactionType: editTransactionType,
-          date: Date.parse(editDate),
-          id: targetTransaction.id,
-          accountName: targetTransaction.accountName,
-          accountID: targetTransaction.accountID,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetTransaction.upLoadedAt,
-          downLoadedAt: targetTransaction.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
       } else if (
         originalData.transactionType === editedData.transactionType &&
         originalData.amount !== editedData.amount
@@ -462,35 +305,6 @@ const AccountDetails = () => {
             );
           }
         }
-        accountObj = {
-          amount: amount,
-          date: Date.parse(editDate),
-          recentTransaction: targetAccount.recentTransaction,
-          id: targetAccount.id,
-          accountName: targetAccount.accountName,
-          accountType: targetAccount.accountType,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetAccount.upLoadedAt,
-          downLoadedAt: targetAccount.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
-        transactionObj = {
-          previousAmount: originalData.previousAmount,
-          purpose: editPurpose,
-          currentAmount: amount,
-          amount: parseFloat(editAmount),
-          transactionType: editTransactionType,
-          date: Date.parse(editDate),
-          id: targetTransaction.id,
-          accountName: targetTransaction.accountName,
-          accountID: targetTransaction.accountID,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetTransaction.upLoadedAt,
-          downLoadedAt: targetTransaction.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
       } else {
         console.log('Case 4');
         if (prevTransactionType === 'Debit') {
@@ -536,50 +350,55 @@ const AccountDetails = () => {
             );
           }
         }
-
-        accountObj = {
-          amount: amount,
-          date: Date.parse(editDate),
-          recentTransaction: targetAccount.recentTransaction,
-          id: targetAccount.id,
-          accountName: targetAccount.accountName,
-          accountType: targetAccount.accountType,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetAccount.upLoadedAt,
-          downLoadedAt: targetAccount.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
-        transactionObj = {
-          previousAmount: originalData.previousAmount,
-          purpose: editPurpose,
-          currentAmount: amount,
-          amount: parseFloat(editAmount),
-          transactionType: editTransactionType,
-          date: Date.parse(editDate),
-          id: targetTransaction.id,
-          accountName: targetTransaction.accountName,
-          accountID: targetTransaction.accountID,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetTransaction.upLoadedAt,
-          downLoadedAt: targetTransaction.downLoadedAt,
-          modifiedAt: Date.now(),
-        };
       }
-      console.log('amount: ', amount);
-      allAccounts.push(accountObj);
-      await EncryptedStorage.setItem('accounts', JSON.stringify(allAccounts))
+      const exceptThisAccount = accountState.filter(
+        item => item.id !== data.id,
+      );
+      const thisAccount = accountState.filter(item => item.id === data.id)[0];
+      thisAccount.date = Date.parse(editDate);
+      thisAccount.amount = amount;
+      thisAccount.recentTransaction = parseFloat(editAmount);
+      const accounts = [...exceptThisAccount, thisAccount].sort(
+        (a, b) => b.date - a.date,
+      );
+      setAccountState(accounts);
+      setStateObject(thisAccount);
+      await EncryptedStorage.setItem('accounts', JSON.stringify(accounts))
         .then(async () => {
-          allTransactions.push(transactionObj);
+          const allTransactions = allTransactions.filter(
+            item => item.id !== editID,
+          );
+          const thisTransaction = allTransactions.filter(
+            item => item.id === editID,
+          )[0];
+          thisTransaction.purpose = editPurpose;
+          thisTransaction.previousAmount = originalData.previousAmount;
+          thisTransaction.currentAmount = amount;
+          thisTransaction.amount = parseFloat(editAmount);
+          thisTransaction.transactionType = editTransactionType;
+          thisTransaction.date = Date.parse(editDate);
+          setTransactionState(
+            [...allTransactions, thisTransaction].sort(
+              (a, b) => b.date - a.date,
+            ),
+          );
+          setAllTransactions(
+            [...allTransactions, thisTransaction].sort(
+              (a, b) => b.date - a.date,
+            ),
+          );
           await EncryptedStorage.setItem(
             'transactions',
-            JSON.stringify(allTransactions),
+            JSON.stringify(
+              [...allTransactions, thisTransaction].sort(
+                (a, b) => b.date - a.date,
+              ),
+            ),
           )
             .then(() => {
               setShowLoader(false);
               showToast('success', 'Data Updated Successfully');
-              setTimeout(() => navigation.navigate('Home'), 1500);
+              // setTimeout(() => navigation.navigate('Home'), 1500);
               setEditDate(new Date());
             })
             .catch(e => {
@@ -618,71 +437,60 @@ const AccountDetails = () => {
   };
   const deleteData = async (id, transactionType, amount, purpose) => {
     setShowLoader(true);
-    let transactions = JSON.parse(
-      await EncryptedStorage.getItem('transactions'),
-    );
-    if (transactions) {
-      let filteredTransaction = transactions.filter(el => el.id !== id);
+    setTransactionState(transactionState.filter(item => item.id !== id));
+
+    await EncryptedStorage.setItem(
+      'transactions',
+      JSON.stringify(transactionState.filter(item => item.id !== id)),
+    ).then(async () => {
+      const exceptThisAccount = accountState.filter(
+        item => item.id !== data.id,
+      );
+      const thisAccount = accountState.filter(item => item.id === data.id)[0];
+      thisAccount.amount =
+        transactionType === 'Debit'
+          ? round2dec(parseFloat(fetchedAmount) + parseFloat(amount))
+          : round2dec(parseFloat(fetchedAmount) - parseFloat(amount));
+      thisAccount.date = Date.now();
+      thisAccount.recentTransaction = parseFloat(amount);
+      setAccountState(
+        [...exceptThisAccount, thisAccount].sort((a, b) => b.date - a.date),
+      );
+      setStateObject(thisAccount);
       await EncryptedStorage.setItem(
-        'transactions',
-        JSON.stringify(filteredTransaction),
-      ).then(async () => {
-        let accounts = JSON.parse(await EncryptedStorage.getItem('accounts'));
-        let targetAccount = accounts.filter(el => el.id === data.id)[0];
-        let filteredAccount = accounts.filter(el => el.id !== data.id);
-        filteredAccount.push({
-          amount:
-            transactionType === 'Debit'
-              ? round2dec(parseFloat(fetchedAmount) + parseFloat(amount))
-              : round2dec(parseFloat(fetchedAmount) - parseFloat(amount)),
-          date: Date.now(),
-          recentTransaction: targetAccount.recentTransaction,
-          id: targetAccount.id,
-          accountName: targetAccount.accountName,
-          accountType: targetAccount.accountType,
-          addedBy: data.addedBy,
-          email: data.email,
-          upLoadedAt: targetAccount.upLoadedAt,
-          downLoadedAt: targetAccount.downLoadedAt,
-          modifiedAt: Date.now(),
-        });
-        await EncryptedStorage.setItem(
-          'accounts',
-          JSON.stringify(filteredAccount),
-        )
-          .then(async () => {
-            if (purpose === 'Fueling') {
-              let fueling = JSON.parse(
-                await EncryptedStorage.getItem('fueling'),
-              );
-              if (fueling) {
-                let filteredFueling = fueling.filter(el => el.id !== id);
-                await EncryptedStorage.setItem(
-                  'fueling',
-                  JSON.stringify(filteredFueling),
-                )
-                  .then(() => {
-                    setShowLoader(false);
-                    showToast('success', 'Data Deleted Successfully');
-                    setTimeout(() => navigation.navigate('Home'), 1500);
-                  })
-                  .catch(e => {
-                    setShowLoader(false);
-                    showToast('error', 'Data Deletation Failed');
-                  });
-              }
-            } else {
-              setShowLoader(false);
-              showToast('success', 'Data Deleted Successfully');
-              setTimeout(() => navigation.navigate('Home'), 1500);
-            }
-          })
-          .catch(e => {
+        'accounts',
+        JSON.stringify(
+          [...exceptThisAccount, thisAccount].sort((a, b) => b.date - a.date),
+        ),
+      )
+        .then(async () => {
+          if (purpose === 'Fueling') {
+            setFuelingState(fuelingState.filter(item => item.id !== id));
+
+            await EncryptedStorage.setItem(
+              'fueling',
+              JSON.stringify(fuelingState.filter(item => item.id !== id)),
+            )
+              .then(() => {
+                setShowLoader(false);
+                showToast('success', 'Data Deleted Successfully');
+                // setTimeout(() => navigation.navigate('Home'), 1500);
+              })
+              .catch(e => {
+                setShowLoader(false);
+                showToast('error', 'Data Deletation Failed');
+              });
+          } else {
             setShowLoader(false);
-            showToast('error', 'Data Deletation Failed');
-          });
-      });
-    }
+            showToast('success', 'Data Deleted Successfully');
+            // setTimeout(() => navigation.navigate('Home'), 1500);
+          }
+        })
+        .catch(e => {
+          setShowLoader(false);
+          showToast('error', 'Data Deletation Failed');
+        });
+    });
   };
 
   const showToast = (type, text) => {
@@ -713,7 +521,7 @@ const AccountDetails = () => {
   ]);
   useEffect(() => {
     getTransactions();
-  }, [isFocused]);
+  }, [isFocused, stateObject]);
   return (
     <View style={{flex: 1}}>
       <ScrollView style={{marginBottom: responsiveHeight(8)}}>

@@ -31,7 +31,15 @@ import {useGlobalContext} from '../context/Store';
 import axios from 'axios';
 const ChangeUP = () => {
   const docId = uuid.v4();
-  const {state, setActiveTab} = useGlobalContext();
+  const {
+    state,
+    setActiveTab,
+    setAccountState,
+    setTransactionState,
+    setVehicleState,
+    setFuelingState,
+    setNoteState,
+  } = useGlobalContext();
   const isFocused = useIsFocused();
   const navigation = useNavigation();
   const [myData, setMyData] = useState('');
@@ -591,6 +599,7 @@ const ChangeUP = () => {
           data.downLoadedAt = Date.now();
           arr.push(data);
         });
+        setVehicleState(newData);
         await EncryptedStorage.setItem('vehicles', JSON.stringify(newData))
           .then(() => {
             showToast('success', 'Vehicle Saved Successfully');
@@ -617,6 +626,7 @@ const ChangeUP = () => {
           data.downLoadedAt = Date.now();
           arr.push(data);
         });
+        setFuelingState(newData);
         await EncryptedStorage.setItem('fueling', JSON.stringify(newData))
           .then(() => {
             showToast('success', 'Fueling Saved Successfully');
@@ -643,6 +653,7 @@ const ChangeUP = () => {
           data.downLoadedAt = Date.now();
           arr.push(data);
         });
+        setAccountState(newData);
         await EncryptedStorage.setItem('accounts', JSON.stringify(newData))
           .then(() => {
             showToast('success', 'Accounts Saved Successfully');
@@ -669,6 +680,7 @@ const ChangeUP = () => {
           data.downLoadedAt = Date.now();
           arr.push(data);
         });
+        setTransactionState(newData);
         await EncryptedStorage.setItem('transactions', JSON.stringify(newData))
           .then(() => {
             showToast('success', 'Transactions Saved Successfully');
@@ -695,6 +707,7 @@ const ChangeUP = () => {
           data.downLoadedAt = Date.now();
           arr.push(data);
         });
+        setNoteState(newData);
         await EncryptedStorage.setItem('notes', JSON.stringify(newData))
           .then(() => {
             showToast('success', 'Notes Saved Successfully');

@@ -36,7 +36,19 @@ import DateTimePickerAndroid from '@react-native-community/datetimepicker';
 import {useGlobalContext} from '../context/Store';
 import BottomBar from './BottomBar';
 const BikeDetails = () => {
-  const {state, stateObject} = useGlobalContext();
+  const {
+    state,
+    stateObject,
+    setStateObject,
+    vehicleState,
+    setVehicleState,
+    fuelingState,
+    setFuelingState,
+    transactionState,
+    setTransactionState,
+    accountState,
+    setAccountState,
+  } = useGlobalContext();
 
   const isFocused = useIsFocused();
   const navigation = useNavigation();
@@ -53,16 +65,16 @@ const BikeDetails = () => {
   const [allFueling, setAllFueling] = useState([]);
   const [allAccounts, setAllAccounts] = useState([]);
   const [showLoader, setShowLoader] = useState(false);
-  const [user, setUser] = useState({});
-  const [othersAccount, setOthersAccount] = useState({
+  const user = state.USER;
+  const othersAccount = {
     date: Date.now(),
     id: 'deviceDefaultAccount',
     accountName: 'OTHER',
     accountType: 'Cash',
     amount: 0,
     recentTransaction: 0,
-    addedBy: state.USER.id,
-  });
+    addedBy: user.id,
+  };
   const [fontColor, setFontColor] = useState(THEME_COLOR);
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
@@ -138,6 +150,7 @@ const BikeDetails = () => {
       ].sort((a, b) => b.date - a.date);
       setFueling(x);
       setAllFueling(x);
+      setFuelingState(x);
       await EncryptedStorage.setItem('fueling', JSON.stringify(x)).then(
         async () => {
           let vehicles = JSON.parse(await EncryptedStorage.getItem('vehicles'));
@@ -151,72 +164,72 @@ const BikeDetails = () => {
           thisVehicle.petrolAdded = parseFloat(volume);
           thisVehicle.date = Date.now();
           thisVehicle.milage = milage;
-          await EncryptedStorage.setItem(
-            'vehicles',
-            JSON.stringify(
-              [...exceptTargetVehile, thisVehicle].sort(
-                (a, b) => b.date - a.date,
-              ),
-            ),
-          ).then(async () => {
-            if (transferingAdmin.id !== 'deviceDefaultAccount') {
-              let accounts = JSON.parse(
-                await EncryptedStorage.getItem('accounts'),
-              );
-              const exceptTransferingAccount = accounts.filter(
-                item => item.id !== transferingAdmin.id,
-              );
-              const thisTransferingAccount = accounts.filter(
-                item => item.id === transferingAdmin.id,
-              )[0];
-              thisTransferingAccount.amount =
-                parseFloat(transferingAdmin.amount) - parseFloat(amount);
-              thisTransferingAccount.date = Date.parse(date);
-              thisTransferingAccount.recentTransaction = parseFloat(amount);
+          const x = [...exceptTargetVehile, thisVehicle].sort(
+            (a, b) => b.date - a.date,
+          );
+          setVehicleState(x);
+          setStateObject(thisVehicle);
+          await EncryptedStorage.setItem('vehicles', JSON.stringify(x)).then(
+            async () => {
+              if (transferingAdmin.id !== 'deviceDefaultAccount') {
+                let accounts = JSON.parse(
+                  await EncryptedStorage.getItem('accounts'),
+                );
+                const exceptTransferingAccount = accounts.filter(
+                  item => item.id !== transferingAdmin.id,
+                );
+                const thisTransferingAccount = accounts.filter(
+                  item => item.id === transferingAdmin.id,
+                )[0];
+                thisTransferingAccount.amount =
+                  parseFloat(transferingAdmin.amount) - parseFloat(amount);
+                thisTransferingAccount.date = Date.parse(date);
+                thisTransferingAccount.recentTransaction = parseFloat(amount);
 
-              await EncryptedStorage.setItem(
-                'accounts',
-                JSON.stringify(
-                  [...exceptTransferingAccount, thisTransferingAccount].sort(
-                    (a, b) => b.date - a.date,
+                await EncryptedStorage.setItem(
+                  'accounts',
+                  JSON.stringify(
+                    [...exceptTransferingAccount, thisTransferingAccount].sort(
+                      (a, b) => b.date - a.date,
+                    ),
                   ),
-                ),
+                );
+              }
+              let transactions = JSON.parse(
+                await EncryptedStorage.getItem('transactions'),
               );
-            }
-            let transactions = JSON.parse(
-              await EncryptedStorage.getItem('transactions'),
-            );
-            let x = [
-              ...transactions,
-              {
-                date: Date.parse(date),
-                id: docId,
-                accountName: transferingAdmin.accountName,
-                accountID: transferingAdmin.id,
-                addedBy: data.addedBy,
-                email: data.email,
-                amount: parseFloat(amount),
-                purpose: 'Fueling',
-                transactionType: 'Debit',
-                previousAmount: parseFloat(transferingAdmin.amount),
-                currentAmount:
-                  parseFloat(transferingAdmin.amount) - parseFloat(amount),
-                upLoadedAt: '',
-                downLoadedAt: '',
-                modifiedAt: '',
-              },
-            ].sort((a, b) => b.date - a.date);
-            await EncryptedStorage.setItem('transactions', JSON.stringify(x))
-              .then(() => {
-                setShowLoader(false);
-                showToast('success', 'Data Added Successfully');
-                setTimeout(() => navigation.navigate('Home'), 1500);
-              })
-              .catch(e => {
-                setShowLoader(false);
-                showToast('error', e);
-              });
-          });
+              let x = [
+                ...transactions,
+                {
+                  date: Date.parse(date),
+                  id: docId,
+                  accountName: transferingAdmin.accountName,
+                  accountID: transferingAdmin.id,
+                  addedBy: data.addedBy,
+                  email: data.email,
+                  amount: parseFloat(amount),
+                  purpose: 'Fueling',
+                  transactionType: 'Debit',
+                  previousAmount: parseFloat(transferingAdmin.amount),
+                  currentAmount:
+                    parseFloat(transferingAdmin.amount) - parseFloat(amount),
+                  upLoadedAt: '',
+                  downLoadedAt: '',
+                  modifiedAt: '',
+                },
+              ].sort((a, b) => b.date - a.date);
+              await EncryptedStorage.setItem('transactions', JSON.stringify(x))
+                .then(() => {
+                  setShowLoader(false);
+                  showToast('success', 'Data Added Successfully');
+                  // setTimeout(() => navigation.navigate('Home'), 1500);
+                })
+                .catch(e => {
+                  setShowLoader(false);
+                  showToast('error', e);
+                });
+            },
+          );
         },
       );
     } else {
@@ -231,6 +244,7 @@ const BikeDetails = () => {
       let newData = accounts.sort((a, b) => b.date - a.date);
       setShowLoader(false);
       setAllAccounts(newData);
+      setAccountState(newData);
     } else {
       setShowLoader(false);
       showToast('success', 'No Account Added!');
@@ -239,12 +253,9 @@ const BikeDetails = () => {
 
   const getFueling = async () => {
     setShowLoader(true);
-    const currentFueling = JSON.parse(
-      await EncryptedStorage.getItem('fueling'),
-    );
-    if (currentFueling.length > 0) {
-      let currentVehicle = currentFueling.filter(el => el.bikeID === data.id);
-      let newData = currentVehicle.sort((a, b) => b.date - a.date);
+    if (fuelingState.length > 0) {
+      const currentVehicle = fuelingState.filter(el => el.bikeID === data.id);
+      const newData = currentVehicle.sort((a, b) => b.date - a.date);
       let cost = 0;
       let fuel = 0;
       newData.map(el => {
@@ -267,8 +278,7 @@ const BikeDetails = () => {
   };
 
   const clearFueling = async () => {
-    const fueling = JSON.parse(await EncryptedStorage.getItem('fueling'));
-    if (fueling) {
+    if (fuelingState.length > 0) {
       Alert.alert('Hold On!', 'Are You Sure To Delete All Fueling Data?', [
         // The "No" button
         // Does nothing but dismiss the dialog when tapped
@@ -280,7 +290,7 @@ const BikeDetails = () => {
         {
           text: 'Yes',
           onPress: async () => {
-            let allData = fueling.filter(el => el.bikeID !== data.id);
+            const allData = fuelingState.filter(el => el.bikeID !== data.id);
             await EncryptedStorage.setItem('fueling', JSON.stringify(allData))
               .then(() => {
                 setShowLoader(false);
@@ -321,7 +331,7 @@ const BikeDetails = () => {
 
   const deleteData = async targetFueling => {
     setShowLoader(true);
-    const vehicles = JSON.parse(await EncryptedStorage.getItem('vehicles'));
+
     const prevFueling = allFueling[1];
     const date =
       allFueling.length > 1 ? prevFueling.date : stateObject.FirstDate;
@@ -332,8 +342,8 @@ const BikeDetails = () => {
     const petrolAdded =
       allFueling.length > 1 ? prevFueling.volume : stateObject.FirstPetrolAdded;
 
-    const exceptThisVehicle = vehicles.filter(item => item.id !== data.id);
-    const thisVehicle = vehicles.filter(item => item.id === data.id)[0];
+    const exceptThisVehicle = vehicleState.filter(item => item.id !== data.id);
+    const thisVehicle = vehicleState.filter(item => item.id === data.id)[0];
     thisVehicle.date = date;
     thisVehicle.milage = milage;
     thisVehicle.totalRun = totalRun;
@@ -341,52 +351,54 @@ const BikeDetails = () => {
     const allVehicles = [...exceptThisVehicle, thisVehicle].sort(
       (a, b) => b.date - a.date,
     );
-
+    setVehicleState(allVehicles);
+    setStateObject(thisVehicle);
     await EncryptedStorage.setItem('vehicles', JSON.stringify(allVehicles))
       .then(async () => {
         const fueling = JSON.parse(await EncryptedStorage.getItem('fueling'));
 
-        let newData = fueling.filter(item => item.id !== targetFueling.id);
+        const newData = fueling.filter(item => item.id !== targetFueling.id);
+        setAllFueling(newData);
+        setFuelingState(newData);
         await EncryptedStorage.setItem('fueling', JSON.stringify(newData))
           .then(async () => {
-            console.log(targetFueling.accountID !== 'deviceDefaultAccount');
             if (targetFueling.accountID !== 'deviceDefaultAccount') {
-              let accounts = JSON.parse(
-                await EncryptedStorage.getItem('accounts'),
-              );
-              let targetAccount = accounts.filter(
+              const targetAccount = accountState.filter(
                 item => targetFueling.accountID === item.id,
               )[0];
-              let filteredAccounts = accounts.filter(
+              const filteredAccounts = accountState.filter(
                 item => targetFueling.accountID !== item.id,
               );
-              let transactions = JSON.parse(
-                await EncryptedStorage.getItem('transactions'),
-              );
-              let filteredTransaction = transactions.filter(
+
+              const filteredTransaction = transactionState.filter(
                 item => targetFueling.id !== item.id,
               );
-              let secondTransaction = filteredTransaction.sort(
+              const secondTransaction = filteredTransaction.sort(
                 (a, b) => b.date - a.date,
               )[1];
-              filteredAccounts.push({
-                amount:
-                  parseFloat(targetAccount.amount) +
-                  parseFloat(targetFueling.amount),
-                date: secondTransaction.date,
-                recentTransaction: parseFloat(secondTransaction.amount),
-                id: targetAccount.id,
-                accountName: targetAccount.accountName,
-                accountType: targetAccount.accountType,
-                addedBy: data.addedBy,
-                email: data.email,
-                upLoadedAt: targetAccount.upLoadedAt,
-                downLoadedAt: targetAccount.downLoadedAt,
-                modifiedAt: Date.now(),
-              });
+              const exceptThisAccount = accountState.filter(
+                item => item.id !== targetAccount.id,
+              );
+              const thisAccount = accountState.filter(
+                item => item.id === targetAccount.id,
+              )[0];
+              thisAccount.amount =
+                parseFloat(targetAccount.amount) +
+                parseFloat(targetFueling.amount);
+              thisAccount.date = secondTransaction.date;
+              setAccountState(
+                [...exceptThisAccount, thisAccount].sort(
+                  (a, b) => b.date - a.date,
+                ),
+              );
+
               await EncryptedStorage.setItem(
                 'accounts',
-                JSON.stringify(filteredAccounts),
+                JSON.stringify(
+                  [...exceptThisAccount, thisAccount].sort(
+                    (a, b) => b.date - a.date,
+                  ),
+                ),
               )
                 .then(async () => {
                   await EncryptedStorage.setItem(
@@ -394,9 +406,19 @@ const BikeDetails = () => {
                     JSON.stringify(filteredTransaction),
                   )
                     .then(() => {
+                      setTransactionState(
+                        transactionState.filter(
+                          item => item.id !== targetFueling.id,
+                        ),
+                      );
+                      setFuelingState(
+                        fuelingState.filter(
+                          item => item.id !== targetFueling.id,
+                        ),
+                      );
                       setShowLoader(false);
                       showToast('success', 'Data Deleted Successfully');
-                      setTimeout(() => navigation.navigate('Home'), 1500);
+                      // setTimeout(() => navigation.navigate('Home'), 1500);
                     })
                     .catch(e => {
                       setShowLoader(false);
@@ -412,7 +434,7 @@ const BikeDetails = () => {
             } else {
               setShowLoader(false);
               showToast('success', 'Data Deleted Successfully');
-              setTimeout(() => navigation.navigate('Home'), 1500);
+              // setTimeout(() => navigation.navigate('Home'), 1500);
             }
           })
           .catch(e => {
@@ -430,127 +452,96 @@ const BikeDetails = () => {
   const addService = async () => {
     setShowLoader(true);
     if (transferingAdmin.id !== 'deviceDefaultAccount') {
-      let accounts = JSON.parse(await EncryptedStorage.getItem('accounts'));
-      let targetAccount = accounts.filter(
-        el => el.id === transferingAdmin.id,
-      )[0];
-      let filteredAccounts = accounts.filter(
-        el => el.id !== transferingAdmin.id,
+      const exceptTransferingAccount = accountState.filter(
+        item => item.id === transferingAdmin.id,
       );
-      filteredAccounts.push({
-        amount: parseFloat(transferingAdmin.amount) - parseFloat(serviceCost),
-        date: Date.parse(date),
-        recentTransaction: parseFloat(serviceCost),
-        id: targetAccount.id,
-        accountName: targetAccount.accountName,
-        accountType: targetAccount.accountType,
-        addedBy: data.addedBy,
-        email: data.email,
-        upLoadedAt: targetAccount.upLoadedAt,
-        downLoadedAt: targetAccount.downLoadedAt,
-        modifiedAt: Date.now(),
-      });
+      const thisTransferingAccount = accountState.filter(
+        item => item.id === transferingAdmin.id,
+      )[0];
+      thisTransferingAccount.amount =
+        parseFloat(transferingAdmin.amount) - parseFloat(serviceCost);
+      thisTransferingAccount.date = Date.parse(date);
+      thisTransferingAccount.recentTransaction = parseFloat(serviceCost);
+      setAccountState(
+        [...exceptTransferingAccount, thisTransferingAccount].sort(
+          (a, b) => b.date - a.date,
+        ),
+      );
       await EncryptedStorage.setItem(
         'accounts',
-        JSON.stringify(filteredAccounts),
+        JSON.stringify(
+          [...exceptTransferingAccount, thisTransferingAccount].sort(
+            (a, b) => b.date - a.date,
+          ),
+        ),
       ).then(async () => {
-        let transactions = JSON.parse(
-          await EncryptedStorage.getItem('transactions'),
-        );
-        if (transactions.length > 0) {
-          transactions.push({
+        const x = [
+          ...transactionState,
+          {
             date: Date.parse(date),
             id: docId,
             accountName: transferingAdmin.accountName,
             accountID: transferingAdmin.id,
+            addedBy: transferingAdmin.addedBy,
             amount: parseFloat(serviceCost),
-            addedBy: data.addedBy,
-            email: data.email,
             purpose: 'Vehicle Service',
             transactionType: 'Debit',
             previousAmount: parseFloat(transferingAdmin.amount),
             currentAmount:
               parseFloat(transferingAdmin.amount) - parseFloat(serviceCost),
-            upLoadedAt: transferingAdmin.upLoadedAt,
-            downLoadedAt: transferingAdmin.downLoadedAt,
-            modifiedAt: Date.now(),
-          });
+          },
+        ];
+        setTransactionState(x);
 
-          await EncryptedStorage.setItem(
-            'transactions',
-            JSON.stringify(transactions),
-          )
-            .then(() => {})
-            .catch(e => {
-              setShowLoader(false);
-              showToast('error', e);
-            });
-        } else {
-          await EncryptedStorage.setItem(
-            'transactions',
-            JSON.stringify([
-              {
-                date: Date.parse(date),
-                id: docId,
-                accountName: transferingAdmin.accountName,
-                accountID: transferingAdmin.id,
-                amount: parseFloat(serviceCost),
-                addedBy: data.addedBy,
-                email: data.email,
-                purpose: 'Vehicle Service',
-                transactionType: 'Debit',
-                previousAmount: parseFloat(transferingAdmin.amount),
-                currentAmount:
-                  parseFloat(transferingAdmin.amount) - parseFloat(serviceCost),
-                upLoadedAt: '',
-                downLoadedAt: '',
-                modifiedAt: '',
-              },
-            ]),
-          )
-            .then(() => {
-              setShowLoader(false);
-              showToast('success', 'Data Added Successfully');
-              setTimeout(() => navigation.navigate('Home'), 1500);
-            })
-            .catch(e => {
-              setShowLoader(false);
-              showToast('error', e);
-            });
-        }
+        await EncryptedStorage.setItem('transactions', JSON.stringify(x))
+          .then(() => {
+            showToast('success', 'Transactions Data Added Successfully');
+          })
+          .catch(e => {
+            setShowLoader(false);
+            showToast('error', e);
+          });
       });
     }
-    const vehicles = JSON.parse(await EncryptedStorage.getItem('vehicles'));
+
     if (isEnabled) {
-      const exceptThisVehicle = vehicles.filter(item => item.id !== data.id);
-      const thisVehicle = vehicles.filter(item => item.id === data.id)[0];
+      const exceptThisVehicle = vehicleState.filter(
+        item => item.id !== data.id,
+      );
+      const thisVehicle = vehicleState.filter(item => item.id === data.id)[0];
       thisVehicle.servicedAtDistance = parseInt(servicedAtDistance);
       thisVehicle.serviceCost = parseFloat(serviceCost);
       thisVehicle.serviceDate = Date.parse(date);
       thisVehicle.oilChangedAt = parseInt(servicedAtDistance);
       thisVehicle.nextOilChangeDistance =
         parseInt(servicedAtDistance) + parseInt(oilRun);
-
+      setVehicleState([...exceptThisVehicle, thisVehicle]);
+      setStateObject(thisVehicle);
       await EncryptedStorage.setItem(
         'vehicles',
         JSON.stringify([...exceptThisVehicle, thisVehicle]),
       );
       setShowLoader(false);
       showToast('success', 'Data Added Successfully');
-      setTimeout(() => navigation.navigate('Home'), 1500);
+      // setTimeout(() => navigation.navigate('Home'), 1500);
     } else {
-      const exceptThisVehicle = vehicles.filter(item => item.id !== data.id);
-      const thisVehicle = vehicles.filter(item => item.id === data.id)[0];
+      const exceptThisVehicle = vehicleState.filter(
+        item => item.id !== data.id,
+      );
+      const thisVehicle = vehicleState.filter(item => item.id === data.id)[0];
       thisVehicle.servicedAtDistance = parseInt(servicedAtDistance);
       thisVehicle.serviceCost = parseFloat(serviceCost);
       thisVehicle.serviceDate = Date.parse(date);
+      setVehicleState([...exceptThisVehicle, thisVehicle]);
+      setStateObject(thisVehicle);
       await EncryptedStorage.setItem(
         'vehicles',
         JSON.stringify([...exceptThisVehicle, thisVehicle]),
-      );
-      setShowLoader(false);
-      showToast('success', 'Data Added Successfully');
-      setTimeout(() => navigation.navigate('Home'), 1500);
+      ).then(() => {
+        setShowLoader(false);
+        showToast('success', 'Data Added Successfully');
+        // setTimeout(() => navigation.navigate('Home'), 1500);
+      });
     }
   };
   const showToast = (type, text) => {
@@ -573,21 +564,30 @@ const BikeDetails = () => {
     return () => backHandler.remove();
   }, []);
 
-  const getUser = async () => {
-    const currentUser = JSON.parse(
-      await EncryptedStorage.getItem('user'),
-    )?.USER;
-    if (currentUser) {
-      setUser(currentUser);
-    }
+  const getTransactions = async () => {
+    setShowLoader(true);
+    const transactions = JSON.parse(
+      await EncryptedStorage.getItem('transactions'),
+    );
+    let newData = transactions.sort((a, b) => b.date - a.date);
+    setShowLoader(false);
+    setTransactionState(newData);
   };
 
-  useEffect(() => {}, [isFocused]);
   useEffect(() => {
     getFueling();
-    getAccounts();
-    getUser();
-  }, [isFocused]);
+    if (accountState.length === 0) {
+      getAccounts();
+    } else {
+      setAllAccounts(accountState.sort((a, b) => b.date - a.date));
+    }
+    if (transactionState.length === 0) {
+      getTransactions();
+    }
+    if (!user) {
+      navigation.navigate('Splash');
+    }
+  }, [isFocused, vehicleState]);
   useEffect(() => {}, [petrolPrice, volume, amount, totalRun, user]);
   return (
     <View style={{flex: 1}}>
