@@ -313,12 +313,8 @@ const CashBook = () => {
       editID !== ''
     ) {
       setShowLoader(true);
-      const exceptThisAccount = accountState.filter(
-        item => item.id === transferingAdmin.id,
-      );
-      const thisAccount = accountState.filter(
-        item => item.id === transferingAdmin.id,
-      )[0];
+      const exceptThisAccount = accountState.filter(item => item.id !== editID);
+      const thisAccount = accountState.filter(item => item.id === editID)[0];
       thisAccount.accountName = editAccountName;
       thisAccount.accountType = editAccountType;
       thisAccount.amount = parseFloat(editAmount);

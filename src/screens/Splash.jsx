@@ -16,12 +16,14 @@ import {
   responsiveFontSize,
 } from 'react-native-responsive-dimensions';
 import {useGlobalContext} from '../context/Store';
+
 const Splash = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const {setState} = useGlobalContext();
   const getDetails = async () => {
     const user = JSON.parse(await EncryptedStorage.getItem('user'));
+    console.log(user);
     if (user != null) {
       setState({
         USER: user.USER,

@@ -73,8 +73,6 @@ const ChangeUP = () => {
   const [isverified, setIsverified] = useState(false);
 
   bcrypt.setRandomFallback(len => {
-    const buf = new Uint8Array(len);
-
     return buf.map(() => Math.floor(isaac.random() * 256));
   });
   const getMyData = async () => {
@@ -414,7 +412,7 @@ const ChangeUP = () => {
       }
     } catch (error) {
       setShowLoder(false);
-      showToast('error', 'Error Occurred While Sending Email');
+      showToast('error', 'Invalid OTP');
       console.log(error);
     }
   };
@@ -568,19 +566,21 @@ const ChangeUP = () => {
   };
 
   const saveData = async () => {
-    let arr = [];
     await firestore()
       .collection('users')
       .where('email', '==', email)
       .get()
       .then(async snapShot => {
         let userRecord = snapShot.docs[0]._data;
-        let newData = userRecord;
-        newData.map(data => {
-          data.downLoadedAt = Date.now();
-          arr.push(data);
-        });
-        await EncryptedStorage.setItem('user', JSON.stringify(arr));
+        const newData = {
+          USER: {
+            id: userRecord.id,
+            email: userRecord.email,
+            name: userRecord.name,
+          },
+          LOGGEDAT: Date.now(),
+        };
+        await EncryptedStorage.setItem('user', JSON.stringify(newData));
       })
       .catch(e => {
         console.log(e);
@@ -596,8 +596,7 @@ const ChangeUP = () => {
         }));
         let newData = userRecord.sort((a, b) => b.date - a.date);
         newData.map(data => {
-          data.downLoadedAt = Date.now();
-          arr.push(data);
+          return (data.downLoadedAt = Date.now());
         });
         setVehicleState(newData);
         await EncryptedStorage.setItem('vehicles', JSON.stringify(newData))
@@ -623,8 +622,7 @@ const ChangeUP = () => {
         }));
         let newData = userRecord.sort((a, b) => b.date - a.date);
         newData.map(data => {
-          data.downLoadedAt = Date.now();
-          arr.push(data);
+          return (data.downLoadedAt = Date.now());
         });
         setFuelingState(newData);
         await EncryptedStorage.setItem('fueling', JSON.stringify(newData))
@@ -650,8 +648,7 @@ const ChangeUP = () => {
         }));
         let newData = userRecord.sort((a, b) => b.date - a.date);
         newData.map(data => {
-          data.downLoadedAt = Date.now();
-          arr.push(data);
+          return (data.downLoadedAt = Date.now());
         });
         setAccountState(newData);
         await EncryptedStorage.setItem('accounts', JSON.stringify(newData))
@@ -677,8 +674,7 @@ const ChangeUP = () => {
         }));
         let newData = userRecord.sort((a, b) => b.date - a.date);
         newData.map(data => {
-          data.downLoadedAt = Date.now();
-          arr.push(data);
+          return (data.downLoadedAt = Date.now());
         });
         setTransactionState(newData);
         await EncryptedStorage.setItem('transactions', JSON.stringify(newData))
@@ -704,8 +700,7 @@ const ChangeUP = () => {
         }));
         let newData = userRecord.sort((a, b) => b.date - a.date);
         newData.map(data => {
-          data.downLoadedAt = Date.now();
-          arr.push(data);
+          return (data.downLoadedAt = Date.now());
         });
         setNoteState(newData);
         await EncryptedStorage.setItem('notes', JSON.stringify(newData))
