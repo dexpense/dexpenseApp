@@ -149,7 +149,7 @@ const BikeDetails = () => {
         },
       ].sort((a, b) => b.date - a.date);
       setFueling(x);
-      setAllFueling(x);
+      setAllFueling(x.filter(el => el.bikeID === data.id));
       setFuelingState(x);
       await EncryptedStorage.setItem('fueling', JSON.stringify(x)).then(
         async () => {
@@ -227,6 +227,8 @@ const BikeDetails = () => {
                   setShowFuelAdd(!showFuelAdd);
                   setAddBtnClicked(false);
                   setTransferingAdmin(allAccounts);
+                  setVolume('0');
+                  setAmount('0');
                 })
                 .catch(e => {
                   setShowLoader(false);
@@ -297,6 +299,7 @@ const BikeDetails = () => {
             const allData = fuelingState.filter(el => el.bikeID !== data.id);
             await EncryptedStorage.setItem('fueling', JSON.stringify(allData))
               .then(() => {
+                setAllFueling([]);
                 setShowLoader(false);
                 showToast('success', 'Fueling Cleared!');
                 navigation.goBack();
@@ -362,7 +365,7 @@ const BikeDetails = () => {
         const fueling = JSON.parse(await EncryptedStorage.getItem('fueling'));
 
         const newData = fueling.filter(item => item.id !== targetFueling.id);
-        setAllFueling(newData);
+        setAllFueling(newData.filter(el => el.bikeID === data.id));
         setFuelingState(newData);
         await EncryptedStorage.setItem('fueling', JSON.stringify(newData))
           .then(async () => {
@@ -603,7 +606,14 @@ const BikeDetails = () => {
       navigation.navigate('Splash');
     }
   }, [isFocused, vehicleState]);
-  useEffect(() => {}, [petrolPrice, volume, amount, totalRun, user]);
+  useEffect(() => {}, [
+    petrolPrice,
+    volume,
+    amount,
+    totalRun,
+    user,
+    allFueling,
+  ]);
   return (
     <View style={{flex: 1}}>
       <ScrollView style={{marginBottom: responsiveHeight(8)}}>

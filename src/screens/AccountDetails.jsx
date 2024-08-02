@@ -55,7 +55,7 @@ const AccountDetails = () => {
 
   const isFocused = useIsFocused();
   const navigation = useNavigation();
-  let data = stateObject;
+  const [data, setData] = useState(stateObject);
   const fetchedAmount =
     data.amount < 0
       ? parseFloat(round2dec(data.amount * -1) * -1)
@@ -150,10 +150,29 @@ const AccountDetails = () => {
           downLoadedAt: '',
           modifiedAt: '',
         },
-      ];
+      ].sort((a, b) => b.date - a.date);
       setTransactionState(transactions);
-      getTransactions();
-
+      setAllTransactions(
+        transactions.filter(el => el.accountID === stateObject.id),
+      );
+      const newData = transactions.filter(
+        el => el.accountID === stateObject.id,
+      );
+      let cost = 0;
+      newData.map(el => {
+        if (el.transactionType === 'Debit') {
+          cost = cost - el.amount;
+        } else {
+          cost = cost + el.amount;
+        }
+        if (cost < 0) {
+          cost = parseFloat(round2dec(cost * -1)) * -1;
+        } else {
+          cost = parseFloat(round2dec(cost));
+        }
+        return round2dec(cost);
+      });
+      setTotalExpense(cost);
       await EncryptedStorage.setItem(
         'transactions',
         JSON.stringify(transactions),
@@ -184,6 +203,11 @@ const AccountDetails = () => {
           setStateObject(thisAccount);
           setShowTransactionAdd(!showTransactionAdd);
           setShowTransactions(!showTransactions);
+          setPurpose('');
+          setAmount('');
+          setRecentTransaction(round2dec(parseFloat(amount)));
+          setTransactionType('Debit');
+          setDate(new Date());
         });
       });
     } else {
@@ -357,6 +381,7 @@ const AccountDetails = () => {
       const exceptThisAccount = accountState.filter(
         item => item.id !== data.id,
       );
+
       const thisAccount = accountState.filter(item => item.id === data.id)[0];
       thisAccount.date = Date.parse(editDate);
       thisAccount.amount = amount;
@@ -365,13 +390,14 @@ const AccountDetails = () => {
         (a, b) => b.date - a.date,
       );
       setAccountState(accounts);
-
+      setRecentTransaction(parseFloat(editAmount));
       await EncryptedStorage.setItem('accounts', JSON.stringify(accounts))
         .then(async () => {
-          const allTransactions = allTransactions.filter(
+          const allTransactions = transactionState.filter(
             item => item.id !== editID,
           );
-          const thisTransaction = allTransactions.filter(
+
+          const thisTransaction = transactionState.filter(
             item => item.id === editID,
           )[0];
           thisTransaction.purpose = editPurpose;
@@ -385,11 +411,24 @@ const AccountDetails = () => {
               (a, b) => b.date - a.date,
             ),
           );
-          setAllTransactions(
-            [...allTransactions, thisTransaction].sort(
-              (a, b) => b.date - a.date,
-            ),
+          const newData = [...allTransactions, thisTransaction].filter(
+            el => el.accountID === stateObject.id,
           );
+          let cost = 0;
+          newData.map(el => {
+            if (el.transactionType === 'Debit') {
+              cost = cost - el.amount;
+            } else {
+              cost = cost + el.amount;
+            }
+            if (cost < 0) {
+              cost = parseFloat(round2dec(cost * -1)) * -1;
+            } else {
+              cost = parseFloat(round2dec(cost));
+            }
+            return round2dec(cost);
+          });
+          setTotalExpense(cost);
           await EncryptedStorage.setItem(
             'transactions',
             JSON.stringify(
@@ -402,6 +441,7 @@ const AccountDetails = () => {
               setShowLoader(false);
               showToast('success', 'Data Updated Successfully');
               setStateObject(thisAccount);
+              setData(thisAccount);
               setVisible(false);
               // setTimeout(() => navigation.navigate('Home'), 1500);
               setEditDate(new Date());
@@ -409,7 +449,7 @@ const AccountDetails = () => {
             .catch(e => {
               setShowLoader(false);
               showToast('error', 'Data Updation Failed');
-              console.log(e);
+              console.log('Last error', e);
             });
         })
         .catch(e => {
@@ -443,6 +483,12 @@ const AccountDetails = () => {
   const deleteData = async (id, transactionType, amount, purpose) => {
     setShowLoader(true);
     setTransactionState(transactionState.filter(item => item.id !== id));
+    setAllTransactions(
+      transactionState
+        .filter(item => item.id !== id)
+        .filter(el => el.accountID === stateObject.id)
+        .sort((a, b) => b.date - a.date),
+    );
 
     await EncryptedStorage.setItem(
       'transactions',
@@ -524,6 +570,8 @@ const AccountDetails = () => {
     prevTransactionType,
     originalData,
     editedData,
+    allTransactions,
+    data,
   ]);
   useEffect(() => {
     getTransactions();

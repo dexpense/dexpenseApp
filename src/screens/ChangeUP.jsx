@@ -575,7 +575,7 @@ const ChangeUP = () => {
       .get()
       .then(async snapShot => {
         let userRecord = snapShot.docs[0]._data;
-        let newData = userRecord.sort((a, b) => b.date - a.date);
+        let newData = userRecord;
         newData.map(data => {
           data.downLoadedAt = Date.now();
           arr.push(data);
@@ -967,19 +967,19 @@ const ChangeUP = () => {
               setAcountOption(true);
             }}>
             <View style={{paddingRight: 10}}>
-              <FontAwesome5 name="cloud-upload-alt" size={40} color={'white'} />
+              <FontAwesome5 name="cloud-upload-alt" size={28} color={'white'} />
             </View>
             <Text
               style={{
                 color: 'white',
-                fontSize: responsiveFontSize(2),
+                fontSize: responsiveFontSize(1.8),
                 fontWeight: '700',
                 paddingRight: 10,
               }}>
-              Backup Your Data
+              Backup / Download Your Data
             </Text>
 
-            <FontAwesome5 name="cloud-download-alt" size={40} color={'white'} />
+            <FontAwesome5 name="cloud-download-alt" size={28} color={'white'} />
           </TouchableOpacity>
         ) : null}
 
