@@ -24,7 +24,6 @@ import {
 } from 'react-native-responsive-dimensions';
 import {getDay, getFullYear, getMonthName} from '../modules/calculatefunctions';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import bcrypt from 'react-native-bcrypt';
 import isaac from 'isaac';
 import {useGlobalContext} from '../context/Store';
@@ -33,6 +32,7 @@ const ChangeUP = () => {
   const docId = uuid.v4();
   const {
     state,
+    setState,
     setActiveTab,
     setAccountState,
     setTransactionState,
@@ -45,9 +45,6 @@ const ChangeUP = () => {
   const [myData, setMyData] = useState('');
   const [email, setEmail] = useState('');
   const [createEmail, setCreateEmail] = useState('');
-  const [inpPassword, setInpPassword] = useState('');
-  const [password, setPassword] = useState('');
-  const [confPassword, setConfPassword] = useState('');
   const [showLoder, setShowLoder] = useState(false);
   const [showName, setShowName] = useState(false);
   const [showUPBtn, setShowUPBtn] = useState(true);
@@ -367,6 +364,7 @@ const ChangeUP = () => {
         });
       }
       setShowLoder(false);
+      setActiveTab(0);
       showToast('success', 'All Data Uploaded!');
       setShowSaveBtn(true);
     } catch (e) {
@@ -580,6 +578,7 @@ const ChangeUP = () => {
           },
           LOGGEDAT: Date.now(),
         };
+        setState(newData);
         await EncryptedStorage.setItem('user', JSON.stringify(newData));
       })
       .catch(e => {
@@ -706,7 +705,8 @@ const ChangeUP = () => {
         await EncryptedStorage.setItem('notes', JSON.stringify(newData))
           .then(() => {
             showToast('success', 'Notes Saved Successfully');
-            setTimeout(() => navigation.navigate('Login'), 1000);
+            setActiveTab(0);
+            setTimeout(() => navigation.navigate('Splash'), 1000);
           })
           .catch(e => {
             console.log(e);
@@ -1192,7 +1192,6 @@ const ChangeUP = () => {
                   onClick={() => {
                     setShowCreateAccount(false);
                     setShowFindAccount(true);
-                    setInpPassword('');
                     setErrFindAccount(false);
                   }}
                 />
@@ -1201,7 +1200,6 @@ const ChangeUP = () => {
                   onClick={() => {
                     setShowCreateAccount(true);
                     setShowFindAccount(false);
-                    setInpPassword('');
                     setErrFindAccount(false);
                   }}
                 />
@@ -1372,9 +1370,6 @@ const ChangeUP = () => {
                 setShowFindAccount(false);
                 setShowCreateAccount(false);
                 setCreateEmail('');
-                setInpPassword('');
-                setPassword('');
-                setConfPassword('');
                 setErrFindAccount(false);
                 setShowUploadBtn(false);
                 setShowSaveBtn(false);
