@@ -52,7 +52,7 @@ const BikeDetails = () => {
 
   const isFocused = useIsFocused();
   const navigation = useNavigation();
-  const data = stateObject;
+  const [data, setData] = useState(stateObject);
   const docId = uuid.v4();
   const [fueling, setFueling] = useState([]);
   const [isclicked, setIsclicked] = useState(false);
@@ -168,7 +168,6 @@ const BikeDetails = () => {
             (a, b) => b.date - a.date,
           );
           setVehicleState(x);
-
           await EncryptedStorage.setItem('vehicles', JSON.stringify(x)).then(
             async () => {
               if (transferingAdmin.id !== 'deviceDefaultAccount') {
@@ -185,7 +184,11 @@ const BikeDetails = () => {
                   parseFloat(transferingAdmin.amount) - parseFloat(amount);
                 thisTransferingAccount.date = Date.parse(date);
                 thisTransferingAccount.recentTransaction = parseFloat(amount);
-
+                setAccountState(
+                  [...exceptTransferingAccount, thisTransferingAccount].sort(
+                    (a, b) => b.date - a.date,
+                  ),
+                );
                 await EncryptedStorage.setItem(
                   'accounts',
                   JSON.stringify(
@@ -229,6 +232,8 @@ const BikeDetails = () => {
                   setTransferingAdmin(allAccounts);
                   setVolume('0');
                   setAmount('0');
+                  setData(thisVehicle);
+                  setStateObject(thisVehicle);
                 })
                 .catch(e => {
                   setShowLoader(false);
@@ -613,6 +618,7 @@ const BikeDetails = () => {
     totalRun,
     user,
     allFueling,
+    data,
   ]);
   return (
     <View style={{flex: 1}}>
