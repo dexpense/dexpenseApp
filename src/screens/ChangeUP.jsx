@@ -138,13 +138,13 @@ const ChangeUP = () => {
             console.log(e);
           });
       }
-      if (vehicles) {
+      if (vehicles.length > 0) {
         await delExtraCloudIds(vehicles, 'vehicles').then(async () => {
           vehicles.map(async (el, ind) => {
             if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.upLoadedAt = Date.now();
               el.email = createEmail;
               if (el.modifiedAt > el.upLoadedAt) {
+                el.upLoadedAt = Date.now();
                 return await firestore()
                   .collection('vehicles')
                   .doc(el.id)
@@ -183,13 +183,13 @@ const ChangeUP = () => {
           });
         });
       }
-      if (fueling) {
+      if (fueling.length > 0) {
         await delExtraCloudIds(fueling, 'fueling').then(async () => {
           fueling.map(async (el, ind) => {
             if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.upLoadedAt = Date.now();
               el.email = createEmail;
               if (el.modifiedAt > el.upLoadedAt) {
+                el.upLoadedAt = Date.now();
                 return await firestore()
                   .collection('fueling')
                   .doc(el.id)
@@ -228,13 +228,13 @@ const ChangeUP = () => {
           });
         });
       }
-      if (accounts) {
+      if (accounts.length > 0) {
         await delExtraCloudIds(accounts, 'accounts').then(async () => {
           accounts.map(async (el, ind) => {
             if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.upLoadedAt = Date.now();
               el.email = createEmail;
               if (el.modifiedAt > el.upLoadedAt) {
+                el.upLoadedAt = Date.now();
                 return await firestore()
                   .collection('accounts')
                   .doc(el.id)
@@ -273,13 +273,13 @@ const ChangeUP = () => {
           });
         });
       }
-      if (transactions) {
+      if (transactions.length > 0) {
         await delExtraCloudIds(transactions, 'transactions').then(async () => {
           transactions.map(async (el, ind) => {
             if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.upLoadedAt = Date.now();
               el.email = createEmail;
               if (el.modifiedAt > el.upLoadedAt) {
+                el.upLoadedAt = Date.now();
                 return await firestore()
                   .collection('transactions')
                   .doc(el.id)
@@ -318,13 +318,13 @@ const ChangeUP = () => {
           });
         });
       }
-      if (notes) {
+      if (notes.length > 0) {
         await delExtraCloudIds(notes, 'notes').then(async () => {
           notes.map(async (el, ind) => {
             if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.upLoadedAt = Date.now();
               el.email = createEmail;
               if (el.modifiedAt > el.upLoadedAt) {
+                el.upLoadedAt = Date.now();
                 return await firestore()
                   .collection('notes')
                   .doc(el.id)
