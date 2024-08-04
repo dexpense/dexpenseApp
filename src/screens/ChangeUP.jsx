@@ -58,6 +58,7 @@ const ChangeUP = () => {
   const [acountOption, setAcountOption] = useState(true);
   const [showFindAccount, setShowFindAccount] = useState(false);
   const [showFindAccountResult, setShowFindAccountResult] = useState(false);
+  const [showResendBtn, setShowResendBtn] = useState(false);
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [errFindAccount, setErrFindAccount] = useState(false);
   const [date, setDate] = useState('');
@@ -114,7 +115,7 @@ const ChangeUP = () => {
 
   const uploadData = async () => {
     setShowLoder(true);
-    const user = JSON.parse(await EncryptedStorage.getItem('user'))?.USER;
+
     const vehicles = JSON.parse(await EncryptedStorage.getItem('vehicles'));
     const fueling = JSON.parse(await EncryptedStorage.getItem('fueling'));
     const accounts = JSON.parse(await EncryptedStorage.getItem('accounts'));
@@ -123,243 +124,139 @@ const ChangeUP = () => {
     );
     const notes = JSON.parse(await EncryptedStorage.getItem('notes'));
     try {
-      if (user) {
-        await firestore()
-          .collection('users')
-          .doc(id)
-          .update({
-            name: user.name,
-          })
-          .then(() => {
-            showToast('success', 'User Data Uploaded!');
-          })
-          .catch(e => {
-            showToast('error', 'User Data Upload Failed!');
-            console.log(e);
-          });
-      }
       if (vehicles.length > 0) {
         await delExtraCloudIds(vehicles, 'vehicles').then(async () => {
-          vehicles.map(async (el, ind) => {
-            if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.email = createEmail;
-              if (el.modifiedAt > el.upLoadedAt) {
-                el.upLoadedAt = Date.now();
-                return await firestore()
-                  .collection('vehicles')
-                  .doc(el.id)
-                  .set(el)
-                  .then(() => {
-                    showToast('success', 'Vehicle Data Uploaded!');
-                  })
-                  .catch(e => {
-                    showToast('error', 'Vehicle Data Upload Failed!');
-                    console.log(e);
-                  });
-              } else {
-                return false;
-              }
-            } else if (
-              el.modifiedAt === '' ||
-              el.upLoadedAt === '' ||
-              el.downLoadedAt === ''
-            ) {
-              el.upLoadedAt = Date.now();
-              el.email = createEmail;
-              return await firestore()
-                .collection('vehicles')
-                .doc(el.id)
-                .set(el)
-                .then(() => {
-                  showToast('success', 'Vehicle Data Uploaded!');
-                })
-                .catch(e => {
-                  showToast('error', 'Vehicle Data Upload Failed!');
-                  console.log(e);
-                });
-            } else {
-              return false;
-            }
+          let arr = [];
+          const vehicleUpload = await vehicles.map(async (el, ind) => {
+            el.upLoadedAt = Date.now();
+            el.email = createEmail;
+            arr.push(el);
+            return await firestore()
+              .collection('vehicles')
+              .doc(el.id)
+              .set(el)
+              .then(() => {
+                console.log(el.id + ' Uploaded');
+              })
+              .catch(e => {
+                showToast('error', 'Vehicle Data Upload Failed!');
+                console.log(e);
+              });
+          });
+          await Promise.all(vehicleUpload).then(async () => {
+            arr = arr.sort((a, b) => b.date - a.date);
+            setVehicleState(arr);
+            await EncryptedStorage.setItem('vehicles', JSON.stringify(arr));
+            showToast('success', 'Vehicle Data Uploaded!');
           });
         });
       }
       if (fueling.length > 0) {
         await delExtraCloudIds(fueling, 'fueling').then(async () => {
-          fueling.map(async (el, ind) => {
-            if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.email = createEmail;
-              if (el.modifiedAt > el.upLoadedAt) {
-                el.upLoadedAt = Date.now();
-                return await firestore()
-                  .collection('fueling')
-                  .doc(el.id)
-                  .set(el)
-                  .then(() => {
-                    showToast('success', 'Fueling Data Uploaded!');
-                  })
-                  .catch(e => {
-                    showToast('error', 'Fueling Data Upload Failed!');
-                    console.log(e);
-                  });
-              } else {
-                return false;
-              }
-            } else if (
-              el.modifiedAt === '' ||
-              el.upLoadedAt === '' ||
-              el.downLoadedAt === ''
-            ) {
-              el.upLoadedAt = Date.now();
-              el.email = createEmail;
-              return await firestore()
-                .collection('fueling')
-                .doc(el.id)
-                .set(el)
-                .then(() => {
-                  showToast('success', 'Fueling Data Uploaded!');
-                })
-                .catch(e => {
-                  showToast('error', 'Fueling Data Upload Failed!');
-                  console.log(e);
-                });
-            } else {
-              return false;
-            }
+          let arr = [];
+          const fuelingUpload = await fueling.map(async (el, ind) => {
+            el.upLoadedAt = Date.now();
+            el.email = createEmail;
+            arr.push(el);
+            return await firestore()
+              .collection('fueling')
+              .doc(el.id)
+              .set(el)
+              .then(() => {
+                console.log(el.id + ' Uploaded');
+              })
+              .catch(e => {
+                showToast('error', 'Fueling Data Upload Failed!');
+                console.log(e);
+              });
+          });
+
+          await Promise.all(fuelingUpload).then(async () => {
+            arr = arr.sort((a, b) => b.date - a.date);
+            setFuelingState(arr);
+            await EncryptedStorage.setItem('fueling', JSON.stringify(arr));
+            showToast('success', 'Fueling Data Uploaded!');
           });
         });
       }
       if (accounts.length > 0) {
         await delExtraCloudIds(accounts, 'accounts').then(async () => {
-          accounts.map(async (el, ind) => {
-            if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.email = createEmail;
-              if (el.modifiedAt > el.upLoadedAt) {
-                el.upLoadedAt = Date.now();
-                return await firestore()
-                  .collection('accounts')
-                  .doc(el.id)
-                  .set(el)
-                  .then(() => {
-                    showToast('success', 'Accounts Data Uploaded!');
-                  })
-                  .catch(e => {
-                    showToast('error', 'Accounts Data Upload Failed!');
-                    console.log(e);
-                  });
-              } else {
-                return false;
-              }
-            } else if (
-              el.modifiedAt === '' ||
-              el.upLoadedAt === '' ||
-              el.downLoadedAt === ''
-            ) {
-              el.upLoadedAt = Date.now();
-              el.email = createEmail;
-              return await firestore()
-                .collection('accounts')
-                .doc(el.id)
-                .set(el)
-                .then(() => {
-                  showToast('success', 'Accounts Data Uploaded!');
-                })
-                .catch(e => {
-                  showToast('error', 'Accounts Data Upload Failed!');
-                  console.log(e);
-                });
-            } else {
-              return false;
-            }
+          let arr = [];
+          const accountUpload = await accounts.map(async (el, ind) => {
+            el.upLoadedAt = Date.now();
+            el.email = createEmail;
+            arr.push(el);
+            return await firestore()
+              .collection('accounts')
+              .doc(el.id)
+              .set(el)
+              .then(() => {
+                console.log(el.id + ' Uploaded');
+              })
+              .catch(e => {
+                showToast('error', 'Accounts Data Upload Failed!');
+                console.log(e);
+              });
+          });
+          await Promise.all(accountUpload).then(async () => {
+            arr = arr.sort((a, b) => b.date - a.date);
+            setAccountState(arr);
+            await EncryptedStorage.setItem('accounts', JSON.stringify(arr));
+            showToast('success', 'Accounts Data Uploaded!');
           });
         });
       }
       if (transactions.length > 0) {
         await delExtraCloudIds(transactions, 'transactions').then(async () => {
-          transactions.map(async (el, ind) => {
-            if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.email = createEmail;
-              if (el.modifiedAt > el.upLoadedAt) {
-                el.upLoadedAt = Date.now();
-                return await firestore()
-                  .collection('transactions')
-                  .doc(el.id)
-                  .set(el)
-                  .then(() => {
-                    showToast('success', 'Transactions Data Uploaded!');
-                  })
-                  .catch(e => {
-                    showToast('error', 'Transactions Data Upload Failed!');
-                    console.log(e);
-                  });
-              } else {
-                return false;
-              }
-            } else if (
-              el.modifiedAt === '' ||
-              el.upLoadedAt === '' ||
-              el.downLoadedAt === ''
-            ) {
-              el.upLoadedAt = Date.now();
-              el.email = createEmail;
-              return await firestore()
-                .collection('transactions')
-                .doc(el.id)
-                .set(el)
-                .then(() => {
-                  showToast('success', 'Transactions Data Uploaded!');
-                })
-                .catch(e => {
-                  showToast('error', 'Transactions Data Upload Failed!');
-                  console.log(e);
-                });
-            } else {
-              return false;
-            }
+          let arr = [];
+          const transactionsUpload = await transactions.map(async (el, ind) => {
+            el.upLoadedAt = Date.now();
+            el.email = createEmail;
+            arr.push(el);
+            return await firestore()
+              .collection('transactions')
+              .doc(el.id)
+              .set(el)
+              .then(() => {
+                console.log(el.id + ' Uploaded');
+              })
+              .catch(e => {
+                showToast('error', 'Transactions Data Upload Failed!');
+                console.log(e);
+              });
+          });
+          await Promise.all(transactionsUpload).then(async () => {
+            arr = arr.sort((a, b) => b.date - a.date);
+            setTransactionState(arr);
+            await EncryptedStorage.setItem('transactions', JSON.stringify(arr));
+            showToast('success', 'Transactions Data Uploaded!');
           });
         });
       }
       if (notes.length > 0) {
         await delExtraCloudIds(notes, 'notes').then(async () => {
-          notes.map(async (el, ind) => {
-            if (el.modifiedAt !== '' && el.upLoadedAt !== '') {
-              el.email = createEmail;
-              if (el.modifiedAt > el.upLoadedAt) {
-                el.upLoadedAt = Date.now();
-                return await firestore()
-                  .collection('notes')
-                  .doc(el.id)
-                  .set(el)
-                  .then(() => {
-                    showToast('success', 'Notes Data Uploaded!');
-                  })
-                  .catch(e => {
-                    showToast('error', 'Notes Data Upload Failed!');
-                    console.log(e);
-                  });
-              } else {
-                return false;
-              }
-            } else if (
-              el.modifiedAt === '' ||
-              el.upLoadedAt === '' ||
-              el.downLoadedAt === ''
-            ) {
-              el.upLoadedAt = Date.now();
-              el.email = createEmail;
-              return await firestore()
-                .collection('notes')
-                .doc(el.id)
-                .set(el)
-                .then(() => {
-                  showToast('success', 'Notes Data Uploaded!');
-                })
-                .catch(e => {
-                  showToast('error', 'Notes Data Upload Failed!');
-                  console.log(e);
-                });
-            } else {
-              return false;
-            }
+          let arr = [];
+          const notesupload = await notes.map(async (el, ind) => {
+            el.upLoadedAt = Date.now();
+            el.email = createEmail;
+            arr.push(el);
+            return await firestore()
+              .collection('notes')
+              .doc(el.id)
+              .set(el)
+              .then(() => {
+                console.log(el.id + ' Uploaded');
+              })
+              .catch(e => {
+                showToast('error', 'Notes Data Upload Failed!');
+                console.log(e);
+              });
+          });
+          await Promise.all(notesupload).then(async () => {
+            arr = arr.sort((a, b) => b.date - a.date);
+            setNoteState(arr);
+            await EncryptedStorage.setItem('notes', JSON.stringify(arr));
+            showToast('success', 'Notes Data Uploaded!');
           });
         });
       }
@@ -379,15 +276,21 @@ const ChangeUP = () => {
     try {
       setShowLoder(true);
       setShowEntry(false);
+      setShowResendBtn(false);
       let response = await axios.post(url, {email: createEmail});
       let record = response.data;
       if (record.success) {
         setShowOtpField(true);
         setShowLoder(false);
+        setTimeout(() => {
+          setShowResendBtn(true);
+        }, 15000);
       }
     } catch (error) {
       setShowLoder(false);
+      setShowResendBtn(false);
       setShowEntry(true);
+
       showToast('error', 'Error Occurred While Sending Email');
       console.log(error);
     }
@@ -764,7 +667,7 @@ const ChangeUP = () => {
   const delExtraCloudIds = async (encName, databaseName) => {
     await firestore()
       .collection(databaseName)
-      .where('email', '==', email)
+      .where('email', '==', createEmail)
       .get()
       .then(async snapShot => {
         const userRecord = snapShot.docs.map(doc => ({
@@ -1173,6 +1076,9 @@ const ChangeUP = () => {
                       }}
                     />
                     <CustomButton title="Verify OTP" onClick={verifyEmail} />
+                    {showResendBtn && (
+                      <CustomButton title="Resend OTP" onClick={sendOtp} />
+                    )}
                   </View>
                 )}
                 {showSubmitBtn && (
