@@ -467,7 +467,7 @@ const BikeDetails = () => {
     setShowLoader(true);
     if (transferingAdmin.id !== 'deviceDefaultAccount') {
       const exceptTransferingAccount = accountState.filter(
-        item => item.id === transferingAdmin.id,
+        item => item.id !== transferingAdmin.id,
       );
       const thisTransferingAccount = accountState.filter(
         item => item.id === transferingAdmin.id,
@@ -527,8 +527,7 @@ const BikeDetails = () => {
       thisVehicle.serviceCost = parseFloat(serviceCost);
       thisVehicle.serviceDate = Date.parse(date);
       thisVehicle.oilChangedAt = parseInt(servicedAtDistance);
-      thisVehicle.nextOilChangeDistance =
-        parseInt(servicedAtDistance) + parseInt(oilRun);
+      thisVehicle.nextOilChangeDistance = parseInt(oilRun);
       setVehicleState([...exceptThisVehicle, thisVehicle]);
 
       await EncryptedStorage.setItem(
@@ -539,6 +538,13 @@ const BikeDetails = () => {
       showToast('success', 'Data Added Successfully');
       // setTimeout(() => navigation.navigate('Home'), 1500);
       setStateObject(thisVehicle);
+      setServiceDone(false);
+      setAddBtnClicked(false);
+      setIsEnabled(false);
+      setTransferingAdmin(allAccounts);
+      setServicedAtDistance('');
+      SetServiceCost('');
+      setDate(new Date());
     } else {
       const exceptThisVehicle = vehicleState.filter(
         item => item.id !== data.id,
