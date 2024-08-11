@@ -40,8 +40,8 @@ import {
   responsiveWidth,
   responsiveFontSize,
 } from 'react-native-responsive-dimensions';
-import DateTimePickerAndroid from '@react-native-community/datetimepicker';
 import {useGlobalContext} from '../context/Store';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 const CashBook = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
@@ -91,20 +91,9 @@ const CashBook = () => {
 
   const calculateAgeOnSameDay = (event, selectedDate) => {
     const currentSelectedDate = selectedDate || date;
-    setOpen('');
     setDate(currentSelectedDate);
-    setInputField({
-      ...inputField,
-      birthdate: `${
-        currentSelectedDate.getDate() < 10
-          ? `0${currentSelectedDate.getDate()}`
-          : currentSelectedDate.getDate()
-      }-${
-        currentSelectedDate.getMonth() + 1 < 10
-          ? `0${currentSelectedDate.getMonth() + 1}`
-          : currentSelectedDate.getMonth() + 1
-      }-${currentSelectedDate.getFullYear()}`,
-    });
+    setOpen(false);
+
     setFontColor('black');
   };
 
@@ -353,8 +342,9 @@ const CashBook = () => {
       transferingAdmin.amount > parseFloat(transferingAmount)
     ) {
       const usersID = user.id;
-      if (accounts) {
+      if (accounts.length > 0) {
         setShowLoader(true);
+
         let otherThanTransferingAccount = accounts.filter(
           el => el.id !== transferingAdmin.id,
         );
@@ -368,92 +358,85 @@ const CashBook = () => {
           el => el.id === receivingAdmin.id,
         )[0];
 
-        otherThanTransferingAndReceivingAccount
-          .push(
-            {
-              id: transferingAccount.id,
-              accountName: transferingAccount.accountName,
-              accountType: transferingAccount.accountType,
-              addedBy: user.id,
-              email: user.email,
-              amount: round2dec(
-                parseFloat(transferingAdmin.amount) -
-                  parseFloat(transferingAmount),
-              ),
-              date: Date.parse(date),
-              recentTransaction: parseFloat(transferingAmount),
-              upLoadedAt: transferingAccount.upLoadedAt,
-              downLoadedAt: transferingAccount.downLoadedAt,
-              modifiedAt: Date.now(),
-            },
-            {
-              id: receivingAccount.id,
-              accountName: receivingAccount.accountName,
-              accountType: receivingAccount.accountType,
-              addedBy: user.id,
-              email: user.email,
-              amount: round2dec(
-                parseFloat(receivingAdmin.amount) +
-                  parseFloat(transferingAmount),
-              ),
-              date: Date.parse(date),
-              recentTransaction: parseFloat(transferingAmount),
-              upLoadedAt: receivingAccount.upLoadedAt,
-              downLoadedAt: receivingAccount.downLoadedAt,
-              modifiedAt: Date.now(),
-            },
-          )
-          .sort((a, b) => b.date - a.date);
-        setAccountState(otherThanTransferingAndReceivingAccount);
-        await EncryptedStorage.setItem(
-          'accounts',
-          JSON.stringify(otherThanTransferingAndReceivingAccount),
-        )
+        otherThanTransferingAndReceivingAccount.push(
+          {
+            id: transferingAccount.id,
+            accountName: transferingAccount.accountName,
+            accountType: transferingAccount.accountType,
+            addedBy: user.id,
+            email: user.email,
+            amount: round2dec(
+              parseFloat(transferingAdmin.amount) -
+                parseFloat(transferingAmount),
+            ),
+            date: Date.parse(date),
+            recentTransaction: parseFloat(transferingAmount),
+            upLoadedAt: transferingAccount.upLoadedAt,
+            downLoadedAt: transferingAccount.downLoadedAt,
+            modifiedAt: Date.now(),
+          },
+          {
+            id: receivingAccount.id,
+            accountName: receivingAccount.accountName,
+            accountType: receivingAccount.accountType,
+            addedBy: user.id,
+            email: user.email,
+            amount: round2dec(
+              parseFloat(receivingAdmin.amount) + parseFloat(transferingAmount),
+            ),
+            date: Date.parse(date),
+            recentTransaction: parseFloat(transferingAmount),
+            upLoadedAt: receivingAccount.upLoadedAt,
+            downLoadedAt: receivingAccount.downLoadedAt,
+            modifiedAt: Date.now(),
+          },
+        );
+        let x = otherThanTransferingAndReceivingAccount.sort(
+          (a, b) => b.date - a.date,
+        );
+        setAccountState(x);
+        await EncryptedStorage.setItem('accounts', JSON.stringify(x))
           .then(async () => {
             const transactions = transactionState;
-            transactions
-              .push(
-                {
-                  date: Date.parse(date),
-                  id: docId,
-                  accountName: transferingAdmin.accountName,
-                  accountID: transferingAdmin.id,
-                  addedBy: usersID,
-                  amount: parseFloat(transferingAmount),
-                  purpose: transferingPurpose,
-                  transactionType: 'Debit',
-                  previousAmount: parseFloat(transferingAdmin.amount),
-                  currentAmount:
-                    parseFloat(transferingAdmin.amount) -
-                    parseFloat(transferingAmount),
-                  upLoadedAt: '',
-                  downLoadedAt: '',
-                  modifiedAt: '',
-                },
-                {
-                  date: Date.parse(date),
-                  id: docId + '-' + 'transfer',
-                  accountName: receivingAdmin.accountName,
-                  accountID: receivingAdmin.id,
-                  addedBy: usersID,
-                  amount: parseFloat(transferingAmount),
-                  purpose: transferingPurpose,
-                  transactionType: 'Credit',
-                  previousAmount: parseFloat(receivingAdmin.amount),
-                  currentAmount:
-                    parseFloat(receivingAdmin.amount) +
-                    parseFloat(transferingAmount),
-                  upLoadedAt: '',
-                  downLoadedAt: '',
-                  modifiedAt: '',
-                },
-              )
-              .sort((a, b) => b.date - a.date);
-            setTransactionState(transactions);
-            await EncryptedStorage.setItem(
-              'transactions',
-              JSON.stringify(transactions),
-            )
+            transactions.push(
+              {
+                date: Date.parse(date),
+                id: docId,
+                accountName: transferingAdmin.accountName,
+                accountID: transferingAdmin.id,
+                addedBy: usersID,
+                amount: parseFloat(transferingAmount),
+                purpose: transferingPurpose,
+                transactionType: 'Debit',
+                previousAmount: parseFloat(transferingAdmin.amount),
+                currentAmount:
+                  parseFloat(transferingAdmin.amount) -
+                  parseFloat(transferingAmount),
+                upLoadedAt: '',
+                downLoadedAt: '',
+                modifiedAt: '',
+              },
+              {
+                date: Date.parse(date),
+                id: docId + '-' + 'transfer',
+                accountName: receivingAdmin.accountName,
+                accountID: receivingAdmin.id,
+                addedBy: usersID,
+                amount: parseFloat(transferingAmount),
+                purpose: transferingPurpose,
+                transactionType: 'Credit',
+                previousAmount: parseFloat(receivingAdmin.amount),
+                currentAmount:
+                  parseFloat(receivingAdmin.amount) +
+                  parseFloat(transferingAmount),
+                upLoadedAt: '',
+                downLoadedAt: '',
+                modifiedAt: '',
+              },
+            );
+            let y = transactions.sort((a, b) => b.date - a.date);
+            setTransactionState(y);
+            await EncryptedStorage.setItem('transactions', JSON.stringify(y))
               .then(() => {
                 setShowLoader(false);
                 showToast('success', 'Amount Transfer Successfull!');
@@ -465,6 +448,7 @@ const CashBook = () => {
                 setIsTransferClicked(false);
                 setShowTranferSelector(false);
                 setTransferingAdmin(allAccounts);
+                setReceivingAdmin(allAccounts);
                 setShowTransferData(false);
                 setTransferingAmount('');
                 setTransferingPurpose('');
@@ -534,7 +518,7 @@ const CashBook = () => {
     <View style={{flex: 1}}>
       <ScrollView
         style={{
-          marginBottom: responsiveHeight(10),
+          marginBottom: responsiveHeight(8),
           marginTop: responsiveHeight(2),
         }}>
         <TouchableOpacity
@@ -821,17 +805,22 @@ const CashBook = () => {
                       </Text>
                     </TouchableOpacity>
 
-                    {open && (
-                      <DateTimePickerAndroid
-                        testID="dateTimePicker"
-                        value={date}
-                        mode="date"
-                        maximumDate={Date.parse(new Date())}
-                        minimumDate={new Date('01-01-2023')}
-                        display="default"
-                        onChange={calculateAgeOnSameDay}
-                      />
-                    )}
+                    <DateTimePickerModal
+                      isVisible={open}
+                      mode="date"
+                      maximumDate={new Date()}
+                      minimumDate={
+                        new Date(`01-01-${new Date().getFullYear()}`)
+                      }
+                      onConfirm={date => {
+                        setOpen(false);
+                        setDate(date);
+                        setFontColor('black');
+                      }}
+                      onCancel={() => {
+                        setOpen(false);
+                      }}
+                    />
                   </View>
                   <CustomButton
                     title={'Transfer Amount'}

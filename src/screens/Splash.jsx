@@ -23,7 +23,6 @@ const Splash = () => {
   const {setState} = useGlobalContext();
   const getDetails = async () => {
     const user = JSON.parse(await EncryptedStorage.getItem('user'));
-    console.log(user);
     if (user != null) {
       setState({
         USER: user.USER,

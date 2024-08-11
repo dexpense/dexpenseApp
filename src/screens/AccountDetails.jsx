@@ -32,6 +32,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import DateTimePickerAndroid from '@react-native-community/datetimepicker';
 const {width, height} = Dimensions.get('window');
 import {
@@ -681,18 +682,20 @@ const AccountDetails = () => {
                       -{date.getFullYear()}
                     </Text>
                   </TouchableOpacity>
-
-                  {open && (
-                    <DateTimePickerAndroid
-                      testID="dateTimePicker"
-                      value={date}
-                      mode="date"
-                      maximumDate={Date.parse(new Date())}
-                      minimumDate={new Date('01-01-2023')}
-                      display="default"
-                      onChange={calculateAgeOnSameDay}
-                    />
-                  )}
+                  <DateTimePickerModal
+                    isVisible={open}
+                    mode="date"
+                    maximumDate={new Date()}
+                    minimumDate={new Date(`01-01-${new Date().getFullYear()}`)}
+                    onConfirm={date => {
+                      setOpen(false);
+                      setDate(date);
+                      setFontColor('black');
+                    }}
+                    onCancel={() => {
+                      setOpen(false);
+                    }}
+                  />
                 </View>
               </View>
               <View
@@ -1020,18 +1023,25 @@ const AccountDetails = () => {
                     -{editDate.getFullYear()}
                   </Text>
                 </TouchableOpacity>
-
-                {editOpen && (
-                  <DateTimePickerAndroid
-                    testID="dateTimePicker"
-                    value={editDate}
-                    mode="date"
-                    maximumDate={Date.parse(new Date())}
-                    minimumDate={new Date('01-01-2023')}
-                    display="default"
-                    onChange={editCalculateAgeOnSameDay}
-                  />
-                )}
+                <DateTimePickerModal
+                  isVisible={editOpen}
+                  mode="date"
+                  date={editDate}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(`01-01-${new Date().getFullYear()}`)}
+                  onConfirm={date => {
+                    setEditDate(date);
+                    setEditedData({
+                      ...editedData,
+                      date: Date.parse(date),
+                    });
+                    setFontColor('black');
+                    setEditOpen(false);
+                  }}
+                  onCancel={() => {
+                    setEditOpen(false);
+                  }}
+                />
               </View>
               <View
                 style={{

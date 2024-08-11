@@ -32,8 +32,9 @@ import {
   responsiveWidth,
   responsiveFontSize,
 } from 'react-native-responsive-dimensions';
-import DateTimePickerAndroid from '@react-native-community/datetimepicker';
+
 import {useGlobalContext} from '../context/Store';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 const Bike = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
@@ -488,18 +489,20 @@ const Bike = () => {
                   -{date.getFullYear()}
                 </Text>
               </TouchableOpacity>
-
-              {open && (
-                <DateTimePickerAndroid
-                  testID="dateTimePicker"
-                  value={date}
-                  mode="date"
-                  maximumDate={Date.parse(new Date())}
-                  minimumDate={new Date(`01-01-${new Date().getFullYear()}`)}
-                  display="default"
-                  onChange={calculateDate}
-                />
-              )}
+              <DateTimePickerModal
+                isVisible={open}
+                mode="date"
+                maximumDate={new Date()}
+                minimumDate={new Date(`01-01-${new Date().getFullYear()}`)}
+                onConfirm={date => {
+                  setOpen(false);
+                  setDate(date);
+                  setFontColor('black');
+                }}
+                onCancel={() => {
+                  setOpen(false);
+                }}
+              />
             </View>
             <CustomButton title={'Add Vehicle'} onClick={AddBike} />
 
@@ -803,18 +806,22 @@ const Bike = () => {
                   -{editdate.getFullYear()}
                 </Text>
               </TouchableOpacity>
+              <DateTimePickerModal
+                isVisible={editopen}
+                date={editdate}
+                mode="date"
+                maximumDate={new Date()}
+                minimumDate={new Date(`01-01-${new Date().getFullYear()}`)}
+                onConfirm={date => {
+                  seteditOpen(false);
+                  seteditDate(date);
 
-              {editopen && (
-                <DateTimePickerAndroid
-                  testID="dateTimePicker"
-                  value={editdate}
-                  mode="date"
-                  maximumDate={Date.parse(new Date())}
-                  minimumDate={new Date(`01-01-${new Date().getFullYear()}`)}
-                  display="default"
-                  onChange={editcalculateDate}
-                />
-              )}
+                  seteditFontColor('black');
+                }}
+                onCancel={() => {
+                  seteditOpen(false);
+                }}
+              />
             </View>
 
             <CustomButton
