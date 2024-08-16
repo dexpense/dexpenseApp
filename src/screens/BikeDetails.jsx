@@ -221,6 +221,7 @@ const BikeDetails = () => {
                   modifiedAt: '',
                 },
               ].sort((a, b) => b.date - a.date);
+              setTransactionState(x);
               await EncryptedStorage.setItem('transactions', JSON.stringify(x))
                 .then(() => {
                   setShowLoader(false);
