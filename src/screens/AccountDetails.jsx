@@ -209,6 +209,7 @@ const AccountDetails = () => {
           setRecentTransaction(round2dec(parseFloat(amount)));
           setTransactionType('Debit');
           setDate(new Date());
+          setIsEnabled(false);
         });
       });
     } else {
