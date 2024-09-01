@@ -342,132 +342,142 @@ const CashBook = () => {
       transferingAdmin.amount > parseFloat(transferingAmount)
     ) {
       const usersID = user.id;
-      if (accounts.length > 0) {
-        setShowLoader(true);
+      try {
+        if (allAccounts.length > 0) {
+          setShowLoader(true);
 
-        let otherThanTransferingAccount = accounts.filter(
-          el => el.id !== transferingAdmin.id,
-        );
-        let otherThanTransferingAndReceivingAccount =
-          otherThanTransferingAccount.filter(el => el.id !== receivingAdmin.id);
-
-        let transferingAccount = accounts.filter(
-          el => el.id === transferingAdmin.id,
-        )[0];
-        let receivingAccount = accounts.filter(
-          el => el.id === receivingAdmin.id,
-        )[0];
-
-        otherThanTransferingAndReceivingAccount.push(
-          {
-            id: transferingAccount.id,
-            accountName: transferingAccount.accountName,
-            accountType: transferingAccount.accountType,
-            addedBy: user.id,
-            email: user.email,
-            amount: round2dec(
-              parseFloat(transferingAdmin.amount) -
-                parseFloat(transferingAmount),
-            ),
-            date: Date.parse(date),
-            recentTransaction: parseFloat(transferingAmount),
-            upLoadedAt: transferingAccount.upLoadedAt,
-            downLoadedAt: transferingAccount.downLoadedAt,
-            modifiedAt: Date.now(),
-          },
-          {
-            id: receivingAccount.id,
-            accountName: receivingAccount.accountName,
-            accountType: receivingAccount.accountType,
-            addedBy: user.id,
-            email: user.email,
-            amount: round2dec(
-              parseFloat(receivingAdmin.amount) + parseFloat(transferingAmount),
-            ),
-            date: Date.parse(date),
-            recentTransaction: parseFloat(transferingAmount),
-            upLoadedAt: receivingAccount.upLoadedAt,
-            downLoadedAt: receivingAccount.downLoadedAt,
-            modifiedAt: Date.now(),
-          },
-        );
-        let x = otherThanTransferingAndReceivingAccount.sort(
-          (a, b) => b.date - a.date,
-        );
-        setAccountState(x);
-        await EncryptedStorage.setItem('accounts', JSON.stringify(x))
-          .then(async () => {
-            const transactions = transactionState;
-            transactions.push(
-              {
-                date: Date.parse(date),
-                id: docId,
-                accountName: transferingAdmin.accountName,
-                accountID: transferingAdmin.id,
-                addedBy: usersID,
-                amount: parseFloat(transferingAmount),
-                purpose: transferingPurpose,
-                transactionType: 'Debit',
-                previousAmount: parseFloat(transferingAdmin.amount),
-                currentAmount:
-                  parseFloat(transferingAdmin.amount) -
-                  parseFloat(transferingAmount),
-                upLoadedAt: '',
-                downLoadedAt: '',
-                modifiedAt: '',
-              },
-              {
-                date: Date.parse(date),
-                id: docId + '-' + 'transfer',
-                accountName: receivingAdmin.accountName,
-                accountID: receivingAdmin.id,
-                addedBy: usersID,
-                amount: parseFloat(transferingAmount),
-                purpose: transferingPurpose,
-                transactionType: 'Credit',
-                previousAmount: parseFloat(receivingAdmin.amount),
-                currentAmount:
-                  parseFloat(receivingAdmin.amount) +
-                  parseFloat(transferingAmount),
-                upLoadedAt: '',
-                downLoadedAt: '',
-                modifiedAt: '',
-              },
+          let otherThanTransferingAccount = allAccounts.filter(
+            el => el.id !== transferingAdmin.id,
+          );
+          let otherThanTransferingAndReceivingAccount =
+            otherThanTransferingAccount.filter(
+              el => el.id !== receivingAdmin.id,
             );
-            let y = transactions.sort((a, b) => b.date - a.date);
-            setTransactionState(y);
-            await EncryptedStorage.setItem('transactions', JSON.stringify(y))
-              .then(() => {
-                setShowLoader(false);
-                showToast('success', 'Amount Transfer Successfull!');
-                getAccounts();
-                setShowTransferView(false);
-                setShowTransferBtn(true);
-                setShowAddAccount(false);
-                setShowAccounts(true);
-                setIsTransferClicked(false);
-                setShowTranferSelector(false);
-                setTransferingAdmin(allAccounts);
-                setReceivingAdmin(allAccounts);
-                setShowTransferData(false);
-                setTransferingAmount('');
-                setTransferingPurpose('');
-                setDate(new Date());
-              })
-              .catch(e => {
-                setShowLoader(false);
-                showToast('error', 'Something Went Wrong');
-                console.log(e);
-              });
-          })
-          .catch(e => {
-            setShowLoader(false);
-            showToast('error', 'Something Went Wrong');
-            console.log(e);
-          });
-      } else {
+
+          let transferingAccount = allAccounts.filter(
+            el => el.id === transferingAdmin.id,
+          )[0];
+          let receivingAccount = allAccounts.filter(
+            el => el.id === receivingAdmin.id,
+          )[0];
+
+          otherThanTransferingAndReceivingAccount.push(
+            {
+              id: transferingAccount.id,
+              accountName: transferingAccount.accountName,
+              accountType: transferingAccount.accountType,
+              addedBy: user.id,
+              email: user.email,
+              amount: round2dec(
+                parseFloat(transferingAdmin.amount) -
+                  parseFloat(transferingAmount),
+              ),
+              date: Date.parse(date),
+              recentTransaction: parseFloat(transferingAmount),
+              upLoadedAt: transferingAccount.upLoadedAt,
+              downLoadedAt: transferingAccount.downLoadedAt,
+              modifiedAt: Date.now(),
+            },
+            {
+              id: receivingAccount.id,
+              accountName: receivingAccount.accountName,
+              accountType: receivingAccount.accountType,
+              addedBy: user.id,
+              email: user.email,
+              amount: round2dec(
+                parseFloat(receivingAdmin.amount) +
+                  parseFloat(transferingAmount),
+              ),
+              date: Date.parse(date),
+              recentTransaction: parseFloat(transferingAmount),
+              upLoadedAt: receivingAccount.upLoadedAt,
+              downLoadedAt: receivingAccount.downLoadedAt,
+              modifiedAt: Date.now(),
+            },
+          );
+          let x = otherThanTransferingAndReceivingAccount.sort(
+            (a, b) => b.date - a.date,
+          );
+          setAccountState(x);
+          await EncryptedStorage.setItem('accounts', JSON.stringify(x))
+            .then(async () => {
+              const transactions = transactionState;
+              transactions.push(
+                {
+                  date: Date.parse(date),
+                  id: docId,
+                  accountName: transferingAdmin.accountName,
+                  accountID: transferingAdmin.id,
+                  addedBy: usersID,
+                  amount: parseFloat(transferingAmount),
+                  purpose: transferingPurpose,
+                  transactionType: 'Debit',
+                  previousAmount: parseFloat(transferingAdmin.amount),
+                  currentAmount:
+                    parseFloat(transferingAdmin.amount) -
+                    parseFloat(transferingAmount),
+                  upLoadedAt: '',
+                  downLoadedAt: '',
+                  modifiedAt: '',
+                },
+                {
+                  date: Date.parse(date),
+                  id: docId + '-' + 'transfer',
+                  accountName: receivingAdmin.accountName,
+                  accountID: receivingAdmin.id,
+                  addedBy: usersID,
+                  amount: parseFloat(transferingAmount),
+                  purpose: transferingPurpose,
+                  transactionType: 'Credit',
+                  previousAmount: parseFloat(receivingAdmin.amount),
+                  currentAmount:
+                    parseFloat(receivingAdmin.amount) +
+                    parseFloat(transferingAmount),
+                  upLoadedAt: '',
+                  downLoadedAt: '',
+                  modifiedAt: '',
+                },
+              );
+              let y = transactions.sort((a, b) => b.date - a.date);
+              setTransactionState(y);
+              await EncryptedStorage.setItem('transactions', JSON.stringify(y))
+                .then(() => {
+                  setShowLoader(false);
+                  showToast('success', 'Amount Transfer Successfull!');
+                  getAccounts();
+                  setShowTransferView(false);
+                  setShowTransferBtn(true);
+                  setShowAddAccount(false);
+                  setShowAccounts(true);
+                  setIsTransferClicked(false);
+                  setShowTranferSelector(false);
+                  setTransferingAdmin(allAccounts);
+                  setReceivingAdmin(allAccounts);
+                  setShowTransferData(false);
+                  setTransferingAmount('');
+                  setTransferingPurpose('');
+                  setDate(new Date());
+                })
+                .catch(e => {
+                  setShowLoader(false);
+                  showToast('error', 'Something Went Wrong');
+                  console.log(e);
+                });
+            })
+            .catch(e => {
+              setShowLoader(false);
+              showToast('error', 'Something Went Wrong');
+              console.log(e);
+            });
+        } else {
+          setShowLoader(false);
+          showToast('error', 'Something Went Wrong');
+          console.log(accounts);
+        }
+      } catch (error) {
         setShowLoader(false);
         showToast('error', 'Something Went Wrong');
+        console.log(error);
       }
     } else {
       setShowLoader(false);

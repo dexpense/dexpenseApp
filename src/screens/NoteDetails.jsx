@@ -25,9 +25,9 @@ import Toast from 'react-native-toast-message';
 import ImageView from 'react-native-image-viewing';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {downloadFile} from '../modules/downloadFile';
-import AutoHeightImage from 'react-native-auto-height-image';
 import {useGlobalContext} from '../context/Store';
 import BottomBar from './BottomBar';
+import AutoHeightImage from '../components/AutoHeightImage';
 const NoteDetails = () => {
   const {state, stateObject} = useGlobalContext();
   const isFocused = useIsFocused();
@@ -160,9 +160,9 @@ const NoteDetails = () => {
               }}
               onPress={() => setIsVisible(true)}>
               <AutoHeightImage
-                width={responsiveWidth(90)}
-                source={{uri: data.uri}}
+                uri={data.uri}
                 style={{
+                  width: responsiveWidth(90),
                   borderRadius: responsiveWidth(2),
                   marginVertical: responsiveHeight(1),
                 }}
@@ -208,9 +208,7 @@ const NoteDetails = () => {
           </Text>
           <TouchableOpacity
             style={{
-              position: 'absolute',
-              right: responsiveWidth(6),
-              bottom: responsiveHeight(1),
+              marginTop: responsiveHeight(1),
             }}
             onPress={() => {
               Clipboard.setString(decryptData(data.noteBody));

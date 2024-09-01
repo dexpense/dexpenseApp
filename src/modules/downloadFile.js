@@ -1,7 +1,7 @@
-import RNFetchBlob from 'rn-fetch-blob';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 import RNFS from 'react-native-fs';
 export const downloadFile = async (url, fileName) => {
-  const {config, fs} = RNFetchBlob;
+  const {config, fs} = ReactNativeBlobUtil;
 
   return config({
     // add this option that makes response data to be stored as a file,

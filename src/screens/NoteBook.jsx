@@ -570,7 +570,7 @@ const NoteBook = () => {
           </ScrollView>
         ) : null}
       </ScrollView>
-      <ScrollView style={{marginBottom: responsiveHeight(19)}}>
+      <ScrollView style={{marginBottom: responsiveHeight(17)}}>
         {allNotes.length > 0 && showNotes
           ? allNotes.slice(0, visibleItems).map((el, ind) => {
               return (
